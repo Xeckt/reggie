@@ -9,8 +9,8 @@ type Reg struct {
 	Key           registry.Key    // The key in which to access (HKLM, HKCU, etc)
 	Path          string          // The path inside Key to use
 	Access        int             // The access type for given Key and Path
-	subKeys       map[string]*Reg // Holds the subkeys underneath Key
-	subKeysValues map[string]any  // Holds the key value data stored in each subkey.
+	SubKeys       map[string]*Reg // Holds the subkeys underneath Key
+	SubKeysValues map[string]any  // Holds the key value data stored in each subkey.
 }
 
 // New initialises a basic *Reg object to handle and begin using.
@@ -19,40 +19,39 @@ type Reg struct {
 func New() *Reg {
 	return &Reg{
 		Access:        registry.ALL_ACCESS,
-		subKeys:       make(map[string]*Reg),
-		subKeysValues: make(map[string]any),
+		SubKeys:       make(map[string]*Reg),
+		SubKeysValues: make(map[string]any),
 	}
 }
 
-// getSubKeysValues obtains Key, enumerates through each subkey in given Path, and obtains each key value attached within
-// every subkey.
-func (r *Reg) getSubKeysValues() error {
-	s, _ := r.enumerateSubKeys()
+// GetSubKeysValues obtains Key, enumerates through each subkey in given Path, and obtains each key value attached within every subkey.
+// When successful, each subkey will be attached to *Reg.SubKeys and each subkeys key=value pair in *Reg.SubKeysValues
+func (r *Reg) GetSubKeysValues() error {
+	s, _ := r.EnumerateSubKeys()
 	for _, subkey := range s {
 		p := r.Path + "\\" + subkey
-		key, err := registry.OpenKey(r.Key, p, registry.ALL_ACCESS)
+		key, err := registry.OpenKey(r.Key, p, registry.ALL_ACCESS) // Must open each subkey as a new key
 		if err != nil {
 			return err
 		}
 		names, err := key.ReadValueNames(0)
 		for _, n := range names {
 			if len(n) != 0 {
-				vt, err := r.getValueFromType(n)
+				vt, _ := r.GetValueFromType(key, n)
 				if err != nil {
 					return err
 				}
-				r.subKeysValues[n] = vt
+				r.SubKeysValues[n] = vt
 			}
 		}
-		r.subKeys[subkey] = &Reg{subKeysValues: r.subKeysValues}
+		r.SubKeys[subkey] = &Reg{SubKeysValues: r.SubKeysValues}
 	}
 	return nil
 }
 
-// getValueFromType takes a registry key defined in the Reg struct and a named data key by name, and will return
-// the given value based on its registry type.
-func (r *Reg) getValueFromType(n string) (any, error) {
-	_, t, err := r.Key.GetValue(n, nil)
+// GetValueFromType takes a specified registry key and returns the value of the named key `n`
+func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
+	_, t, err := k.GetValue(n, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,16 +60,16 @@ func (r *Reg) getValueFromType(n string) (any, error) {
 	case registry.NONE:
 		return nil, nil // Allow nil checks
 	case registry.SZ:
-		v, _, err = r.Key.GetStringValue(n)
+		v, _, err = k.GetStringValue(n)
 	case registry.EXPAND_SZ:
-		v, _, err = r.Key.GetStringValue(n)
+		v, _, err = k.GetStringValue(n)
 		v, err = registry.ExpandString(v.(string))
 	case registry.DWORD, registry.QWORD:
-		v, _, err = r.Key.GetIntegerValue(n)
+		v, _, err = k.GetIntegerValue(n)
 	case registry.BINARY:
-		v, _, err = r.Key.GetBinaryValue(n)
+		v, _, err = k.GetBinaryValue(n)
 	case registry.MULTI_SZ:
-		v, _, err = r.Key.GetStringsValue(n)
+		v, _, err = k.GetStringsValue(n)
 	}
 	if v != nil {
 		return v, nil
@@ -78,12 +77,12 @@ func (r *Reg) getValueFromType(n string) (any, error) {
 	return v, err
 }
 
-// enumerateSubKeys takes the given key in the Reg struct and will enumerate
+// EnumerateSubKeys takes the given key in the Reg struct and will enumerate
 // and find it's subkeys. Amount specifies how many subkeys you want to enumerate.
 // The default value is 0 to enumerate all, anything above 0 will enumerate to the specified amount.
 // behaves the same as specified in registry documentation: https://pkg.go.dev/golang.org/x/sys/windows/registry#Key.ReadSubKeyNames
 // Amount cannot have more than one element.
-func (r *Reg) enumerateSubKeys(amount ...int) ([]string, error) {
+func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 	if len(amount) > 1 {
 		return nil, errors.New("length of amount cannot exceed 1")
 	}
