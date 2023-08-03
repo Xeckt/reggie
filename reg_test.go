@@ -12,7 +12,7 @@ var (
 
 func TestReg_EnumerateSubKeys(t *testing.T) {
 	r.Key = registry.CURRENT_CONFIG
-	r.SubKeyPath = `System`
+	r.Path = `System`
 	want := "CurrentControlSet"
 	got, err := r.EnumerateSubKeys(1)
 	if err != nil {
@@ -25,13 +25,13 @@ func TestReg_EnumerateSubKeys(t *testing.T) {
 
 func TestReg_GetValueFromType(t *testing.T) {
 	r.Key = registry.LOCAL_MACHINE
-	r.SubKeyPath = `SYSTEM\CurrentControlSet\Control`
-	keyName := `CurrentUser`
-	err := r.OpenKey()
+	r.Path = `SYSTEM\CurrentControlSet\Control`
+	subKey := `CurrentUser`
+	key, err := registry.OpenKey(r.Key, r.Path, registry.ALL_ACCESS)
 	if err != nil {
-		t.Error("Could not open subkey", r.SubKeyPath, "Error:", err)
+		t.Error("Could not open subkey", r.Path, "Error:", err)
 	}
-	got, err := r.GetValueFromType(r.CurrOpenKey, keyName)
+	got, err := r.GetValueFromType(key, subKey)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,23 +43,20 @@ func TestReg_GetValueFromType(t *testing.T) {
 
 func TestReg_GetSubKeysValues(t *testing.T) {
 	r.Key = registry.LOCAL_MACHINE
-	r.SubKeyPath = `SYSTEM\CurrentControlSet`
-	err := r.OpenKey()
-	if err != nil {
-		t.Error("Could not open given key. Error:", err)
-	}
-	err = r.GetSubKeysValues()
+	r.Path = `SYSTEM\CurrentControlSet`
+	err := r.GetSubKeysValues()
 	if err != nil {
 		t.Error(err)
 	}
 	want := []string{"Control", "CurrentUser", "USERNAME"}
 	received := []string{}
-	for subkey, vMap := range r.SubKeys {
-		for key, got := range vMap.SubKeysValues {
-			if strings.EqualFold(subkey, "Control") &&
-				strings.EqualFold(key, "CurrentUser") &&
-				strings.EqualFold("USERNAME", got.(string)) {
-				received = append(received, subkey, key, got.(string))
+
+	for subkey, keys := range r.SubKeys {
+		for key, value := range keys.Value {
+			if strings.EqualFold(want[0], subkey) &&
+				strings.EqualFold(want[1], key) &&
+				strings.EqualFold(want[2], value.(string)) {
+				received = append(received, subkey, key, value.(string))
 				break
 			}
 		}
