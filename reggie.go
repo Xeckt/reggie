@@ -90,7 +90,7 @@ func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
 	return v, err
 }
 
-// EnumerateSubKeys takes the given key in the Reg struct and will enumerate
+// EnumerateSubKeys takes the given key in the Reg struct, enumerate
 // and find it's subkeys. Amount specifies how many subkeys you want to enumerate.
 // The default value is 0 to enumerate all, anything above 0 will enumerate to the specified amount.
 // behaves the same as specified in registry documentation: https://pkg.go.dev/golang.org/x/sys/windows/registry#Key.ReadSubKeyNames
