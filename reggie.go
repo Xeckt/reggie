@@ -6,9 +6,10 @@ import (
 )
 
 type Reg struct {
-	Key           registry.Key    // The key in which to access (HKLM, HKCU, etc)
-	Path          string          // The path inside Key to use
-	Access        int             // The access type for given Key and Path
+	Key           registry.Key // The key in which to access (HKLM, HKCU, etc)
+	SubKeyPath    string       // The path inside Key to use
+	Access        uint32       // The access type for given Key and SubKeyPath
+	CurrOpenKey   registry.Key
 	SubKeys       map[string]*Reg // Holds the subkeys underneath Key
 	SubKeysValues map[string]any  // Holds the key value data stored in each subkey.
 }
@@ -24,13 +25,22 @@ func New() *Reg {
 	}
 }
 
-// GetSubKeysValues obtains Key, enumerates through each subkey in given Path, and obtains each key value attached within every subkey.
+func (r *Reg) OpenKey() error {
+	var err error
+	r.CurrOpenKey, err = registry.OpenKey(r.Key, r.SubKeyPath, r.Access)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetSubKeysValues obtains Key, enumerates through each subkey in given SubKeyPath, and obtains each key value attached within every subkey.
 // When successful, each subkey will be attached to *Reg.SubKeys and each subkeys key=value pair in *Reg.SubKeysValues
 func (r *Reg) GetSubKeysValues() error {
 	s, _ := r.EnumerateSubKeys()
 	for _, subkey := range s {
-		p := r.Path + "\\" + subkey
-		key, err := registry.OpenKey(r.Key, p, registry.ALL_ACCESS) // Must open each subkey as a new key
+		key, err := registry.OpenKey(r.Key, r.SubKeyPath+"\\"+subkey, r.Access) // Must open each subkey as a new key
+		r.CurrOpenKey = key
 		if err != nil {
 			return err
 		}
@@ -87,7 +97,7 @@ func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 		return nil, errors.New("length of amount cannot exceed 1")
 	}
 	var sKeys []string
-	key, err := registry.OpenKey(r.Key, r.Path, registry.ENUMERATE_SUB_KEYS)
+	key, err := registry.OpenKey(r.Key, r.SubKeyPath, registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
 		return nil, err
 	}
