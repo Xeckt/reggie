@@ -1,98 +1,104 @@
 package main
 
 import (
+	"errors"
 	"golang.org/x/sys/windows/registry"
-	"log"
 )
 
 type Reg struct {
-	Key    registry.Key
-	Path   string
-	Access int
-	sKey   map[string]*Reg
-	kV     map[string]any
+	Key           registry.Key    // The key in which to access (HKLM, HKCU, etc)
+	Path          string          // The path inside Key to use
+	Access        int             // The access type for given Key and Path
+	subKeys       map[string]*Reg // Holds the subkeys underneath Key
+	subKeysValues map[string]any  // Holds the key value data stored in each subkey.
 }
 
+// New initialises a basic *Reg object to handle and begin using.
+// Not recommended if not using for tests as Access is ALL_ACCESS, unless your
+// requirements meet this demand.
 func New() *Reg {
 	return &Reg{
-		sKey: make(map[string]*Reg),
-		kV:   make(map[string]any),
+		Access:        registry.ALL_ACCESS,
+		subKeys:       make(map[string]*Reg),
+		subKeysValues: make(map[string]any),
 	}
 }
 
-func (r *Reg) GetSubsKeysAndValues() {
-	s := r.EnumerateSubKeysNames()
+// getSubKeysValues obtains Key, enumerates through each subkey in given Path, and obtains each key value attached within
+// every subkey.
+func (r *Reg) getSubKeysValues() error {
+	s, _ := r.enumerateSubKeys()
 	for _, subkey := range s {
 		p := r.Path + "\\" + subkey
 		key, err := registry.OpenKey(r.Key, p, registry.ALL_ACCESS)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		names, err := key.ReadValueNames(0)
 		for _, n := range names {
 			if len(n) != 0 {
-				vt := r.GetValueFromType(key, n)
-				r.kV[n] = vt
+				vt, err := r.getValueFromType(n)
+				if err != nil {
+					return err
+				}
+				r.subKeysValues[n] = vt
 			}
 		}
-		r.sKey[subkey] = &Reg{kV: r.kV}
+		r.subKeys[subkey] = &Reg{subKeysValues: r.subKeysValues}
 	}
+	return nil
 }
 
-func (r *Reg) GetValueFromType(k registry.Key, n string) any {
-	_, t, err := k.GetValue(n, nil)
+// getValueFromType takes a registry key defined in the Reg struct and a named data key by name, and will return
+// the given value based on its registry type.
+func (r *Reg) getValueFromType(n string) (any, error) {
+	_, t, err := r.Key.GetValue(n, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	var v any
 	switch t {
 	case registry.NONE:
+		return nil, nil // Allow nil checks
 	case registry.SZ:
-		v, _, err = k.GetStringValue(n)
-		if err != nil {
-			log.Fatal(err)
-		}
+		v, _, err = r.Key.GetStringValue(n)
 	case registry.EXPAND_SZ:
-		v, _, err = k.GetStringValue(n)
+		v, _, err = r.Key.GetStringValue(n)
 		v, err = registry.ExpandString(v.(string))
-		if err != nil {
-			log.Fatal(err)
-		}
 	case registry.DWORD, registry.QWORD:
-		v, _, err = k.GetIntegerValue(n)
-		if err != nil {
-			log.Fatal(err)
-		}
+		v, _, err = r.Key.GetIntegerValue(n)
 	case registry.BINARY:
-		v, _, err = k.GetBinaryValue(n)
-		if err != nil {
-			log.Fatal(err)
-		}
+		v, _, err = r.Key.GetBinaryValue(n)
 	case registry.MULTI_SZ:
-		v, _, err = k.GetStringsValue(n)
-		if err != nil {
-			log.Fatal(err)
-		}
+		v, _, err = r.Key.GetStringsValue(n)
 	}
-	return v
+	if v != nil {
+		return v, nil
+	}
+	return v, err
 }
 
-func (r *Reg) EnumerateSubKeysNames(level ...int) []string {
-	if len(level) > 1 {
-		log.Fatal("Level cannot exceed length of 1")
+// enumerateSubKeys takes the given key in the Reg struct and will enumerate
+// and find it's subkeys. Amount specifies how many subkeys you want to enumerate.
+// The default value is 0 to enumerate all, anything above 0 will enumerate to the specified amount.
+// behaves the same as specified in registry documentation: https://pkg.go.dev/golang.org/x/sys/windows/registry#Key.ReadSubKeyNames
+// Amount cannot have more than one element.
+func (r *Reg) enumerateSubKeys(amount ...int) ([]string, error) {
+	if len(amount) > 1 {
+		return nil, errors.New("length of amount cannot exceed 1")
 	}
 	var sKeys []string
 	key, err := registry.OpenKey(r.Key, r.Path, registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	if len(level) != 0 {
-		sKeys, err = key.ReadSubKeyNames(level[0])
+	if len(amount) != 0 {
+		sKeys, err = key.ReadSubKeyNames(amount[0])
 	} else {
 		sKeys, err = key.ReadSubKeyNames(0)
 	}
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return sKeys
+	return sKeys, nil
 }
