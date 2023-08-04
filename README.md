@@ -6,7 +6,7 @@ Documentation and examples are available here: [Documentation](#Documentation)
 [Go's registry package](https://pkg.go.dev/golang.org/x/sys/windows/registry) becomes a bit tedious when handling
 a lot of keys inside the registry at once, and fetching data from them. 
 
-So, reggie helps handle situations where you are handling a larger set of registry data.
+So, reggie helps handle situations where you are dealing with larger sets of registry data.
 
 # Using Reggie
 ```
