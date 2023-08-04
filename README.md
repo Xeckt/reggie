@@ -24,8 +24,8 @@ Usage:
 // Grabs values of subkey located in specified Key
 r := reggie.New()
 r.Key = registry.LOCAL_MACHINE
-r.Path = `System\CurrentControlSet`
-err := r.GetSubKeysValues()
+r.Path = `SYSTEM\CurrentControlSet`
+err := r.GetKeysValues()
 if err != nil {
 	log.Fatal(err)
 }
