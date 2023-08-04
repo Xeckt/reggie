@@ -18,7 +18,7 @@ type SubKey struct {
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
-// OpenKey is used open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
+// OpenKey is used to open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
 // want to populate the SubKeys map with the subkeys data.
 func (s SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	k := Reg{
