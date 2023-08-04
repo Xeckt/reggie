@@ -23,7 +23,7 @@ r := reggie.New()
 r.Key = registry.LOCAL_MACHINE
 r.Path = `System\CurrentControlSet`
 ```
-From here you have few options. Reggie can enumerate through the subkey names for you from the provided location above, but we will take advantage
+From here you have few options. Reggie can enumerate through the subkey names for you such as the provided location above, but we will take advantage
 of the `GetSubKeysValues()` function. Which will populate the `SubKeys` map in our struct with the specified registry locations
 key data.
 ```go
