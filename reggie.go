@@ -2,16 +2,14 @@ package reggie
 
 import (
 	"errors"
-	"fmt"
 	"golang.org/x/sys/windows/registry"
 )
 
 type Reg struct {
-	Key         registry.Key       // The key in which to access (HKLM, HKCU, etc)
-	Path        string             // The path inside Key to use
-	Access      uint32             // The access type for given Key and Path
-	CurrOpenKey registry.Key       // The key currently opened
-	SubKeys     map[string]*SubKey // Holds the subkeys underneath Key
+	RootKey    registry.Key       // The key in which to access (HKLM, HKCU, etc). Can also be a subkey
+	Path       string             // The path inside RootKey to use
+	Permission uint32             // The access type for given RootKey and Path
+	SubKeys    map[string]*SubKey // Holds the subkeys underneath RootKey
 }
 
 type SubKey struct {
@@ -19,55 +17,65 @@ type SubKey struct {
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
-// New initialises a basic *Reg object to handle and begin using.
-// Not recommended if not using for tests as Access is ALL_ACCESS, unless your
-// requirements meet this demand.
+// OpenKey is used to open a subkey in the Reg SubKeys map and return the new subkey as an object for interaction.
+func (s SubKey) OpenKey() (SubKey, error) {
+	k, err := registry.OpenKey(s.Key.RootKey, s.Key.Path, s.Key.Permission)
+	if err != nil {
+		return s, err
+	}
+	s.Key.RootKey = k
+	return s, nil
+}
+
+// New initialises a Reg struct with ALL_ACCESS permissions. Better used for testing unless requirements demand it.
 func New() *Reg {
 	return &Reg{
-		Access:  registry.ALL_ACCESS,
-		SubKeys: make(map[string]*SubKey),
+		Permission: registry.ALL_ACCESS,
+		SubKeys:    make(map[string]*SubKey),
 	}
 }
 
-// GetSubKeysValues obtains Key, enumerates through each subkey in given Path, and obtains each non-empty value attached within every subkey.
-// When successful, each subkey will be attached to *Reg.SubKeys and each subkeys key=value pair in *Reg.SubKeys[k].Value
-func (r *Reg) GetSubKeysValues() error {
+// GetKeysValues obtains RootKey, enumerates through each subkey in given Path. Each subkey will be attached inside Reg.SubKeys
+// with its relevant data.
+func (r *Reg) GetKeysValues() error {
 	s, err := r.EnumerateSubKeys()
 	if err != nil {
 		return err
 	}
 	for _, subkey := range s {
 		p := r.Path + "\\" + subkey
-		key, err := registry.OpenKey(r.Key, p, r.Access) // Must open each subkey as a new key
+		key, err := registry.OpenKey(r.RootKey, p, r.Permission) // Must open each subkey as a new key
 		if err != nil {
-			fmt.Println(subkey, r.Path, err)
 			return err
+		}
+		if r.SubKeys[subkey] == nil {
+			r.SubKeys[subkey] = &SubKey{
+				Key:   &Reg{},
+				Value: map[string]any{},
+			}
 		}
 		names, err := key.ReadValueNames(0)
 		if err != nil {
 			return err
 		}
-		for _, name := range names {
-			if r.SubKeys[subkey] == nil {
-				r.SubKeys[subkey] = &SubKey{
-					Value: map[string]any{}, // Create a blank value map
-				}
+		for _, n := range names {
+			value, err := r.GetValueFromType(key, n)
+			if err != nil {
+				return err
 			}
-			value, _ := r.GetValueFromType(key, name)
-			if len(name) != 0 {
-				r.SubKeys[subkey].Value[name] = value
-			}
+			r.SubKeys[subkey].Value[n] = value
 		}
+		r.SubKeys[subkey].Key.RootKey = key // Allow for an interactive subkey object inside each subkey map
+		r.SubKeys[subkey].Key.Path = p
+		r.SubKeys[subkey].Key.Permission = r.Permission
 	}
 	return nil
 }
 
 // GetValueFromType takes a specified registry key and returns the value of the named key `n`
 func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
-	_, t, err := k.GetValue(n, nil)
-	if err != nil {
-		return nil, err
-	}
+	var err error
+	_, t, _ := k.GetValue(n, nil)
 	var v any
 	switch t {
 	case registry.NONE:
@@ -84,23 +92,22 @@ func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
 	case registry.MULTI_SZ:
 		v, _, err = k.GetStringsValue(n)
 	}
-	if v != nil {
-		return v, nil
+	if err != nil {
+		return nil, err
 	}
-	return v, err
+	return v, nil
 }
 
 // EnumerateSubKeys takes the given key in the Reg struct, enumerate
 // and find it's subkeys. Amount specifies how many subkeys you want to enumerate.
-// The default value is 0 to enumerate all, anything above 0 will enumerate to the specified amount.
-// behaves the same as specified in registry documentation: https://pkg.go.dev/golang.org/x/sys/windows/registry#Key.ReadSubKeyNames
-// Amount cannot have more than one element.
+// The default value is 0 to enumerate all within a given key, anything above 0 will enumerate to the specified amount.
+// Amount cannot have more than one element. Behaves the same as specified in registry documentation: https://pkg.go.dev/golang.org/x/sys/windows/registry#Key.ReadSubKeyNames
 func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 	if len(amount) > 1 {
 		return nil, errors.New("length of amount cannot exceed 1")
 	}
 	var sKeys []string
-	key, err := registry.OpenKey(r.Key, r.Path, registry.ENUMERATE_SUB_KEYS)
+	key, err := registry.OpenKey(r.RootKey, r.Path, registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
 		return nil, err
 	}
