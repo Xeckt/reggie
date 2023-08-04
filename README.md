@@ -4,7 +4,7 @@ A small wrapper over Go's std [registry](https://pkg.go.dev/golang.org/x/sys/win
 Documentation and examples are available here: [Documentation](#Documentation)
 # Summary
 [Go's registry package](https://pkg.go.dev/golang.org/x/sys/windows/registry) becomes a bit tedious when handling
-a lot more keys inside the registry at once, and fetching the data from them. 
+a lot of keys inside the registry at once, and fetching data from them. 
 
 So, reggie helps handle situations where you are handling a larger set of registry data.
 
