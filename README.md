@@ -52,9 +52,9 @@ We could take this a step further by trailing into `TeamViewer` subkeys as well,
 and setting its parameter to true, otherwise it creates an empty subkey map for you to handle while keeping related key objects. Useful when you are
 handling situations where string magic is necessary:
 ```go
-teamviewerSubKeys, err := r.SubKeys["TeamViewer"].OpenKey(true)
+s, err := r.SubKeys["TeamViewer"].OpenKey(true)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Println(teamviewerSubKeys.SubKeys) // Returns a map of the subkeys you can use as normal registry.Key objects
+fmt.Println(s.SubKeys) // Returns a map of the subkeys you can use as normal registry.Key objects
 ```
