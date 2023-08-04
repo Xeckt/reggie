@@ -11,7 +11,7 @@ var (
 )
 
 func TestReg_EnumerateSubKeys(t *testing.T) {
-	r.Key = registry.CURRENT_CONFIG
+	r.RootKey = registry.CURRENT_CONFIG
 	r.Path = `System`
 	want := "CurrentControlSet"
 	got, err := r.EnumerateSubKeys(1)
@@ -24,10 +24,10 @@ func TestReg_EnumerateSubKeys(t *testing.T) {
 }
 
 func TestReg_GetValueFromType(t *testing.T) {
-	r.Key = registry.LOCAL_MACHINE
+	r.RootKey = registry.LOCAL_MACHINE
 	r.Path = `SYSTEM\CurrentControlSet\Control`
 	subKey := `CurrentUser`
-	key, err := registry.OpenKey(r.Key, r.Path, registry.ALL_ACCESS)
+	key, err := registry.OpenKey(r.RootKey, r.Path, registry.ALL_ACCESS)
 	if err != nil {
 		t.Error("Could not open subkey", r.Path, "Error:", err)
 	}
@@ -42,7 +42,7 @@ func TestReg_GetValueFromType(t *testing.T) {
 }
 
 func TestReg_GetSubKeysValues(t *testing.T) {
-	r.Key = registry.LOCAL_MACHINE
+	r.RootKey = registry.LOCAL_MACHINE
 	r.Path = `SYSTEM\CurrentControlSet`
 	err := r.GetSubKeysValues()
 	if err != nil {
