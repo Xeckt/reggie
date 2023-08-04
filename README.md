@@ -4,7 +4,7 @@ A small wrapper over Go's std [registry](https://pkg.go.dev/golang.org/x/sys/win
 [![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
 
 # Summary
-Through working on various personal projects heavily reliant to Windows, some of the standard functions of Go's [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry)
+Through working on various personal projects heavily reliant to Windows, some of the standard functions of [Go's registry](https://pkg.go.dev/golang.org/x/sys/windows/registry)
 did not extend or perform the way I needed them to. Being low level, I was missing some handy behaviour I had
 to end up writing myself.
 There is a lot of manual behaviour necessary to write if you're only using the std registry package for your project which can become
