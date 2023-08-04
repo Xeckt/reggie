@@ -44,7 +44,7 @@ func TestReg_GetValueFromType(t *testing.T) {
 func TestReg_GetSubKeysValues(t *testing.T) {
 	r.RootKey = registry.LOCAL_MACHINE
 	r.Path = `SYSTEM\CurrentControlSet`
-	err := r.GetSubKeysValues()
+	err := r.GetKeysValues()
 	if err != nil {
 		t.Error(err)
 	}
