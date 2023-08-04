@@ -6,9 +6,10 @@ import (
 )
 
 type Reg struct {
-	RootKey    registry.Key       // The key in which to access (HKLM, HKCU, etc). Can also be a subkey
-	Path       string             // The path inside RootKey to use
-	Permission uint32             // The access type for given RootKey and Path
+	RootKey    registry.Key // The key in which to access (HKLM, HKCU, etc). Can also be a subkey
+	Path       string       // The path inside RootKey to use
+	Permission uint32       // The access type for given RootKey and Path
+	OpenedKey  registry.Key
 	SubKeys    map[string]*SubKey // Holds the subkeys underneath RootKey
 }
 
@@ -17,14 +18,22 @@ type SubKey struct {
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
-// OpenKey is used to open a subkey in the Reg SubKeys map and return the new subkey as an object for interaction.
-func (s SubKey) OpenKey() (SubKey, error) {
-	k, err := registry.OpenKey(s.Key.RootKey, s.Key.Path, s.Key.Permission)
-	if err != nil {
-		return s, err
+// OpenKey is used to open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
+// want to populate the SubKeys map with the subkeys data.
+func (s SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
+	k := Reg{
+		RootKey:    s.Key.RootKey,
+		Path:       s.Key.Path,
+		Permission: s.Key.Permission,
+		SubKeys:    map[string]*SubKey{},
 	}
-	s.Key.RootKey = k
-	return s, nil
+	if populateKeyValues {
+		err := k.GetKeysValues()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &k, nil
 }
 
 // New initialises a Reg struct with ALL_ACCESS permissions. Better used for testing unless requirements demand it.
@@ -65,8 +74,9 @@ func (r *Reg) GetKeysValues() error {
 			}
 			r.SubKeys[subkey].Value[n] = value
 		}
-		r.SubKeys[subkey].Key.RootKey = key // Allow for an interactive subkey object inside each subkey map
 		r.SubKeys[subkey].Key.Path = p
+		r.SubKeys[subkey].Key.OpenedKey = key
+		r.SubKeys[subkey].Key.RootKey = r.RootKey
 		r.SubKeys[subkey].Key.Permission = r.Permission
 	}
 	return nil
