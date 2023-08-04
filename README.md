@@ -17,7 +17,7 @@ go get github.com/Xeckt/reggie
 [![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
 
 You usually start by defining a `Reggie.Reg` struct object, either with the `New()` func or by populating the struct yourself.
-It uses the same format as the [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry) package.
+It uses the same format as the [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry) package with minor additions.
 ```go
 r := reggie.New()
 r.Key = registry.LOCAL_MACHINE
@@ -35,7 +35,7 @@ for key, subkey := range r.SubKeys {
     fmt.Println(key, subkey.Value)
 }
 ```
-If you know what you're looking for specifically, you have a few approaches, and Reggie still allows you to utilise the [std registry package functions](https://pkg.go.dev/golang.org/x/sys/windows/registry):
+If you know what you're looking for specifically, you have a few approaches, and reggie still allows you to utilise the [std registry package functions](https://pkg.go.dev/golang.org/x/sys/windows/registry):
 ```go
 r := reggie.New()
 r.RootKey = registry.LOCAL_MACHINE
