@@ -2,7 +2,9 @@ package reggie
 
 import (
 	"errors"
+	"fmt"
 	"golang.org/x/sys/windows/registry"
+	"path/filepath"
 )
 
 type Reg struct {
@@ -18,14 +20,16 @@ type SubKey struct {
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
+var regStr []*Reg
+
 // OpenKey is used to open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
 // want to populate the SubKeys map with the subkeys data.
-func (s SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
+func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	k := Reg{
 		RootKey:    s.Key.RootKey,
 		Path:       s.Key.Path,
 		Permission: s.Key.Permission,
-		SubKeys:    map[string]*SubKey{},
+		SubKeys:    make(map[string]*SubKey),
 	}
 	if populateKeyValues {
 		err := k.GetKeysValues()
@@ -60,7 +64,7 @@ func (r *Reg) GetKeysValues() error {
 		if r.SubKeys[subkey] == nil {
 			r.SubKeys[subkey] = &SubKey{
 				Key:   &Reg{},
-				Value: map[string]any{},
+				Value: make(map[string]any),
 			}
 		}
 		names, err := key.ReadValueNames(0)
@@ -130,4 +134,19 @@ func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 		return nil, err
 	}
 	return sKeys, nil
+}
+
+func Traverse(r *Reg, fn func(reg *Reg)) error {
+	if fn == nil {
+		return fmt.Errorf("function is nil, traversal cannot continue")
+	}
+	for _, s := range r.SubKeys {
+		sk, err := r.SubKeys[filepath.Base(s.Key.Path)].OpenKey(true)
+		if err != nil {
+			return fmt.Errorf("key %s has error -> %v -> value -> %v", s.Key.Path, err, s.Value)
+		}
+		fn(sk)
+		_ = Traverse(sk, fn)
+	}
+	return nil
 }
