@@ -40,13 +40,13 @@ If you know what you're looking for specifically, you have a few approaches, and
 r := reggie.New()
 r.RootKey = registry.LOCAL_MACHINE
 r.Path = `SOFTWARE`
-err := r.GetKeysValues()
+err := r.GetKeysValues() // Populate the struct
 if err != nil {
 	log.Fatal(err)
 }
-teamviewer := r.SubKeys["TeamViewer"]
-fmt.Println(teamviewer.Value["Version"])
-fmt.Println(teamviewer.Key.OpenedKey.GetStringValue("Version"))
+teamviewer := r.SubKeys["TeamViewer"] // Utilise the teamviewer subkey
+fmt.Println(teamviewer.Value["Version"]) // Reggie's version of accessing values
+fmt.Println(teamviewer.Key.OpenedKey.GetStringValue("Version")) // Default way of the registry package
 ```
 We could take this a step further by trailing into `TeamViewer` subkeys as well, by taking advantage of the `OpenKey(bool)` function
 and setting its parameter to true, otherwise it creates an empty subkey map for you to handle while keeping related key objects. Useful when you are
