@@ -59,7 +59,7 @@ if err != nil {
 fmt.Println(s.SubKeys) // Returns a map of the subkeys you can use as normal registry.Key objects
 ```
 A prominent feature of reggie is the `Traverse()` function. Sometimes you don't know what you're looking for, or you may have dynamic
-data you need to handle. Traverse helps you write your own magic:
+data you need to handle. This function will recursively traverse the tree below a given `Key`. It helps you write your own magic:
 ```go
 err = reggie.Traverse(r, false, func(reg *reggie.Reg) {
 	if strings.Contains(reg.Path, "QNAP") {
