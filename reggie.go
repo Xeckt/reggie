@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/sys/windows/registry"
-	"path/filepath"
 )
 
 type Reg struct {
@@ -25,6 +24,9 @@ var regStr []*Reg
 // OpenKey is used to open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
 // want to populate the SubKeys map with the subkeys data.
 func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
+	/*if s == nil || s.Key == nil || s.Value == nil {
+		return nil, nil
+	}*/
 	k := Reg{
 		RootKey:    s.Key.RootKey,
 		Path:       s.Key.Path,
@@ -136,17 +138,18 @@ func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 	return sKeys, nil
 }
 
-func Traverse(r *Reg, fn func(reg *Reg)) error {
+// Traverse allows you to recursively traverse a given reg object based on its current key.
+func Traverse(r *Reg, getKeyValues bool, fn func(reg *Reg)) error {
 	if fn == nil {
 		return fmt.Errorf("function is nil, traversal cannot continue")
 	}
 	for _, s := range r.SubKeys {
-		sk, err := r.SubKeys[filepath.Base(s.Key.Path)].OpenKey(true)
+		r, err := s.OpenKey(getKeyValues)
 		if err != nil {
-			return fmt.Errorf("key %s has error -> %v -> value -> %v", s.Key.Path, err, s.Value)
+			return err
 		}
-		fn(sk)
-		_ = Traverse(sk, fn)
+		fn(r)
+		_ = Traverse(r, getKeyValues, fn)
 	}
 	return nil
 }
