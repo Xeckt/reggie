@@ -58,3 +58,18 @@ if err != nil {
 }
 fmt.Println(s.SubKeys) // Returns a map of the subkeys you can use as normal registry.Key objects
 ```
+A prominent feature of reggie is the `Traverse()` function. Sometimes you don't know what you're looking for, or you may have dynamic
+data you need to handle. Traverse helps you write your own magic:
+```go
+err = reggie.Traverse(r, false, func(reg *reggie.Reg) {
+	if strings.Contains(reg.Path, "QNAP") {
+		fmt.Println(reg.Path)
+		return
+	}
+})
+```
+Something that reggie doesn't provide yet, is the handling of the errors that are under the hood in the `registry` package. Because the traversal can start
+from the bottom up or the up down, you may experience different results each time it's run. So running the same code above may result in error one time and not another. 
+This is also rather complicated considering the errors are inherently returned by Windows, so a lot of string magic needs to happen.
+
+A solution to this is being worked on currently.
