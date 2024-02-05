@@ -21,18 +21,18 @@ type SubKey struct {
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
-// NewReg initialises a Reg struct with ALL_ACCESS permissions. Better used for testing unless requirements demand it.
-func NewReg() *Reg {
+// NewReg initialises a Reg struct with given permissions.
+func NewReg(permission uint32) *Reg {
 	return &Reg{
-		Permission: registry.ALL_ACCESS,
+		Permission: permission,
 		SubKeys:    make(map[string]*SubKey),
 	}
 }
 
 // NewSubKey initialises a struct for Reg.SubKeys. Useful if you need to handle your own structure if traversing.
-func NewSubKey() *SubKey {
+func NewSubKey(permission uint32) *SubKey {
 	return &SubKey{
-		Key:   NewReg(),
+		Key:   NewReg(permission),
 		Value: make(map[string]any),
 	}
 }
@@ -74,7 +74,7 @@ func (r *Reg) GetKeysValues() error {
 		}
 
 		if r.SubKeys[subkey] == nil {
-			r.SubKeys[subkey] = NewSubKey()
+			r.SubKeys[subkey] = NewSubKey(r.Permission)
 		}
 
 		names, err := key.ReadValueNames(0)
