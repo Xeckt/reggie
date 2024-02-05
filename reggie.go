@@ -10,8 +10,8 @@ import (
 )
 
 type Reg struct {
-	RootKey    registry.Key // The key in which to access (HKLM, HKCU, etc). Can also be a subkey
-	OpenedKey  registry.Key
+	RootKey    registry.Key       // The key in which to access (HKLM, HKCU, etc). Can also be a subkey
+	OpenedKey  registry.Key       // The key currently opened, if different from the root key (i.e parent key)
 	Path       string             // The path inside RootKey to use
 	Permission uint32             // The access type for given RootKey and Path
 	SubKeys    map[string]*SubKey // Holds the subkeys underneath RootKey
@@ -22,7 +22,7 @@ type SubKey struct {
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
-// NewReg initialises a Reg struct with given permissions.
+// NewReg initialises a Reg struct. Permission can be supplied via go's registry package.
 func NewReg(permission uint32) *Reg {
 	return &Reg{
 		Permission: permission,
@@ -30,7 +30,7 @@ func NewReg(permission uint32) *Reg {
 	}
 }
 
-// NewSubKey initialises a struct for Reg.SubKeys. Useful if you need to handle your own structure when traversing especially.
+// NewSubKey initialises a struct for Reg.SubKeys.
 func NewSubKey(permission uint32) *SubKey {
 	return &SubKey{
 		Key:   NewReg(permission),
@@ -39,7 +39,7 @@ func NewSubKey(permission uint32) *SubKey {
 }
 
 // OpenKey is used to open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
-// want to populate the SubKeys map with the subkeys data.
+// want to populate the SubKeys map with it's held data.
 func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	k := Reg{
 		RootKey:    s.Key.RootKey,
@@ -66,6 +66,7 @@ func (r *Reg) GetKeysValues() error {
 
 	for _, subkey := range s {
 		p := r.Path + "\\" + subkey
+
 		key, err := registry.OpenKey(r.RootKey, p, r.Permission) // Must open each subkey as a new key
 		if err != nil {
 			if strings.Contains(err.Error(), "Access is denied") {
