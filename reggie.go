@@ -1,3 +1,5 @@
+//go:build windows
+
 package reggie
 
 import (
@@ -8,9 +10,9 @@ import (
 
 type Reg struct {
 	RootKey    registry.Key // The key in which to access (HKLM, HKCU, etc). Can also be a subkey
-	Path       string       // The path inside RootKey to use
-	Permission uint32       // The access type for given RootKey and Path
 	OpenedKey  registry.Key
+	Path       string             // The path inside RootKey to use
+	Permission uint32             // The access type for given RootKey and Path
 	SubKeys    map[string]*SubKey // Holds the subkeys underneath RootKey
 }
 
@@ -19,7 +21,21 @@ type SubKey struct {
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
-var regStr []*Reg
+// NewReg initialises a Reg struct with ALL_ACCESS permissions. Better used for testing unless requirements demand it.
+func NewReg() *Reg {
+	return &Reg{
+		Permission: registry.ALL_ACCESS,
+		SubKeys:    make(map[string]*SubKey),
+	}
+}
+
+// NewSubKey initialises a struct for Reg.SubKeys. Useful if you need to handle your own structure if traversing.
+func NewSubKey() *SubKey {
+	return &SubKey{
+		Key:   NewReg(),
+		Value: make(map[string]any),
+	}
+}
 
 // OpenKey is used to open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
 // want to populate the SubKeys map with the subkeys data.
@@ -42,14 +58,6 @@ func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	return &k, nil
 }
 
-// New initialises a Reg struct with ALL_ACCESS permissions. Better used for testing unless requirements demand it.
-func New() *Reg {
-	return &Reg{
-		Permission: registry.ALL_ACCESS,
-		SubKeys:    make(map[string]*SubKey),
-	}
-}
-
 // GetKeysValues obtains RootKey, enumerates through each subkey in given Path. Each subkey will be attached inside Reg.SubKeys
 // with its relevant data.
 func (r *Reg) GetKeysValues() error {
@@ -57,22 +65,23 @@ func (r *Reg) GetKeysValues() error {
 	if err != nil {
 		return err
 	}
+
 	for _, subkey := range s {
 		p := r.Path + "\\" + subkey
 		key, err := registry.OpenKey(r.RootKey, p, r.Permission) // Must open each subkey as a new key
 		if err != nil {
 			return err
 		}
+
 		if r.SubKeys[subkey] == nil {
-			r.SubKeys[subkey] = &SubKey{
-				Key:   &Reg{},
-				Value: make(map[string]any),
-			}
+			r.SubKeys[subkey] = NewSubKey()
 		}
+
 		names, err := key.ReadValueNames(0)
 		if err != nil {
 			return err
 		}
+
 		for _, n := range names {
 			value, err := r.GetValueFromType(key, n)
 			if err != nil {
@@ -80,6 +89,7 @@ func (r *Reg) GetKeysValues() error {
 			}
 			r.SubKeys[subkey].Value[n] = value
 		}
+
 		r.SubKeys[subkey].Key.Path = p
 		r.SubKeys[subkey].Key.OpenedKey = key
 		r.SubKeys[subkey].Key.RootKey = r.RootKey
@@ -93,6 +103,7 @@ func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
 	var err error
 	_, t, _ := k.GetValue(n, nil)
 	var v any
+
 	switch t {
 	case registry.NONE:
 		return nil, nil // Allow nil checks
@@ -108,9 +119,11 @@ func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
 	case registry.MULTI_SZ:
 		v, _, err = k.GetStringsValue(n)
 	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	return v, nil
 }
 
@@ -122,16 +135,20 @@ func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 	if len(amount) > 1 {
 		return nil, errors.New("length of amount cannot exceed 1")
 	}
+
 	var sKeys []string
 	key, err := registry.OpenKey(r.RootKey, r.Path, registry.ENUMERATE_SUB_KEYS)
+
 	if err != nil {
 		return nil, err
 	}
+
 	if len(amount) != 0 {
 		sKeys, err = key.ReadSubKeyNames(amount[0])
 	} else {
 		sKeys, err = key.ReadSubKeyNames(0)
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -143,13 +160,16 @@ func Traverse(r *Reg, getKeyValues bool, fn func(reg *Reg)) error {
 	if fn == nil {
 		return fmt.Errorf("function is nil, traversal cannot continue")
 	}
+
 	for _, s := range r.SubKeys {
 		r, err := s.OpenKey(getKeyValues)
 		if err != nil {
 			return err
 		}
+
 		fn(r)
 		_ = Traverse(r, getKeyValues, fn)
 	}
+
 	return nil
 }
