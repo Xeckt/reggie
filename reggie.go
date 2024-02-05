@@ -90,12 +90,14 @@ func (r *Reg) GetKeysValues() error {
 			}
 			r.SubKeys[subkey].Value[n] = value
 		}
+
 		r.SubKeys[subkey].Key = &Reg{
 			Path:       p,
 			RootKey:    r.RootKey,
 			OpenedKey:  key,
 			Permission: r.Permission,
 		}
+
 	}
 	return nil
 }
@@ -109,15 +111,20 @@ func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
 	switch t {
 	case registry.NONE:
 		return nil, nil // Allow nil checks
+
 	case registry.SZ:
 		v, _, err = k.GetStringValue(n)
+
 	case registry.EXPAND_SZ:
 		v, _, err = k.GetStringValue(n)
 		v, err = registry.ExpandString(v.(string))
+
 	case registry.DWORD, registry.QWORD:
 		v, _, err = k.GetIntegerValue(n)
+
 	case registry.BINARY:
 		v, _, err = k.GetBinaryValue(n)
+
 	case registry.MULTI_SZ:
 		v, _, err = k.GetStringsValue(n)
 	}
