@@ -1,5 +1,6 @@
 # reggie
 [![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
+
 A small wrapper over Go's std [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry) package.
 
 Documentation and examples are available here: [Documentation](#Documentation)
