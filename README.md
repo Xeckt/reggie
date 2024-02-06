@@ -63,7 +63,7 @@ func main() {
 	r := reggie.NewReg(registry.ALL_ACCESS)
 	r.RootKey = registry.CURRENT_USER
 	r.Path = `Control Panel`
-	err := r.GetKeysValues() // Reggie will populate its own structs
+	err := r.GetKeysValues()
 	if err != nil {
 		log.Fatal(err)
 	}
