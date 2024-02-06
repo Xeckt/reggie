@@ -177,13 +177,16 @@ func (r *Reg) CreateValue(key string, value any, valueType uint32) error {
 	case registry.DWORD:
 		err = r.ActiveKey.SetDWordValue(key, value.(uint32))
 	}
+
 	if err != nil {
 		return err
 	}
+
 	err = r.GetKeysValues()
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
