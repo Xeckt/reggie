@@ -56,22 +56,6 @@ func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	return &k, nil
 }
 
-// CreateKey creates a child key from the Reg.ActiveKey
-func (r *Reg) CreateKey(name string) error {
-	_, exists, err := registry.CreateKey(r.ActiveKey, name, r.Permission)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return fmt.Errorf("key %s already exists", name)
-	}
-	err = r.GetKeysValues()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // GetKeysValues obtains RootKey, enumerates through each subkey in given Path. Each subkey will be attached inside Reg.SubKeyMap
 // with its relevant data.
 func (r *Reg) GetKeysValues() error {
@@ -99,19 +83,6 @@ func (r *Reg) GetKeysValues() error {
 			r.SubKeyMap[subkey] = NewSubKey(r.Permission)
 		}
 
-		names, err := key.ReadValueNames(0)
-		if err != nil {
-			return err
-		}
-
-		for _, n := range names {
-			value, err := r.GetValueFromType(key, n)
-			if err != nil {
-				return err
-			}
-			r.SubKeyMap[subkey].Value[n] = value
-		}
-
 		r.SubKeyMap[subkey].Data = &Reg{
 			Path:       p,
 			RootKey:    r.RootKey,
@@ -119,12 +90,27 @@ func (r *Reg) GetKeysValues() error {
 			Permission: r.Permission,
 		}
 
+		names, err := key.ReadValueNames(0)
+		if err != nil {
+			return err
+		}
+
+		for _, n := range names {
+			value, err := r.GetValue(key, n)
+			if err != nil {
+				return err
+			}
+			if value != nil { // Populate if it's not empty
+				r.SubKeyMap[subkey].Value[n] = value
+			}
+		}
+
 	}
 	return nil
 }
 
-// GetValueFromType takes a specified registry key and returns the value of the named key `n`
-func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
+// GetValue takes a specified registry key and returns the value of the named key `n`
+func (r *Reg) GetValue(k registry.Key, n string) (any, error) {
 	var err error
 	_, t, _ := k.GetValue(n, nil)
 	var v any
@@ -155,6 +141,42 @@ func (r *Reg) GetValueFromType(k registry.Key, n string) (any, error) {
 	}
 
 	return v, nil
+}
+
+// CreateKey creates a child key from the Reg.ActiveKey
+func (r *Reg) CreateKey(name string) error {
+	_, exists, err := registry.CreateKey(r.ActiveKey, name, r.Permission)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("key %s already exists", name)
+	}
+	err = r.GetKeysValues() // Repopulate struct with new keys
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreateStringValue will create a String key=value pair or expanded string key=value pair inside the passed Reg.ActiveKey
+func (r *Reg) CreateStringValue(key string, value string, stringType uint32) error {
+	var err error
+
+	switch stringType {
+	case registry.SZ:
+		err = r.ActiveKey.SetStringValue(key, value)
+	case registry.EXPAND_SZ:
+		err = r.ActiveKey.SetExpandStringValue(key, value)
+	}
+	if err != nil {
+		return err
+	}
+	err = r.GetKeysValues()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // EnumerateSubKeys takes the given key in the Reg struct, enumerate
