@@ -159,15 +159,23 @@ func (r *Reg) CreateKey(name string) error {
 	return nil
 }
 
-// CreateStringValue will create a String key=value pair or expanded string key=value pair inside the passed Reg.ActiveKey
-func (r *Reg) CreateStringValue(key string, value string, stringType uint32) error {
+// CreateValue will create a designated key=value pair based on the valueType passed from registry type constants
+func (r *Reg) CreateValue(key string, value any, valueType uint32) error {
 	var err error
 
-	switch stringType {
+	switch valueType {
 	case registry.SZ:
-		err = r.ActiveKey.SetStringValue(key, value)
+		err = r.ActiveKey.SetStringValue(key, value.(string))
 	case registry.EXPAND_SZ:
-		err = r.ActiveKey.SetExpandStringValue(key, value)
+		err = r.ActiveKey.SetExpandStringValue(key, value.(string))
+	case registry.MULTI_SZ:
+		err = r.ActiveKey.SetStringsValue(key, value.([]string))
+	case registry.BINARY:
+		err = r.ActiveKey.SetBinaryValue(key, value.([]byte))
+	case registry.QWORD:
+		err = r.ActiveKey.SetQWordValue(key, value.(uint64))
+	case registry.DWORD:
+		err = r.ActiveKey.SetDWordValue(key, value.(uint32))
 	}
 	if err != nil {
 		return err
