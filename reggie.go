@@ -56,6 +56,22 @@ func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	return &k, nil
 }
 
+// CreateKey creates a child key from the Reg.ActiveKey
+func (r *Reg) CreateKey(name string) error {
+	_, exists, err := registry.CreateKey(r.ActiveKey, name, r.Permission)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("key %s already exists", name)
+	}
+	err = r.GetKeysValues()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetKeysValues obtains RootKey, enumerates through each subkey in given Path. Each subkey will be attached inside Reg.SubKeyMap
 // with its relevant data.
 func (r *Reg) GetKeysValues() error {
@@ -152,7 +168,6 @@ func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 
 	var sKeys []string
 	key, err := registry.OpenKey(r.RootKey, r.Path, registry.ENUMERATE_SUB_KEYS)
-
 	if err != nil {
 		return nil, err
 	}
