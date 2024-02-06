@@ -165,16 +165,40 @@ func (r *Reg) CreateValue(key string, value any, valueType uint32) error {
 
 	switch valueType {
 	case registry.SZ:
+		if _, ok := value.(string); !ok {
+			err = fmt.Errorf("value is not of type string but of type: %T", value)
+			break
+		}
 		err = r.ActiveKey.SetStringValue(key, value.(string))
 	case registry.EXPAND_SZ:
+		if _, ok := value.(string); !ok {
+			err = fmt.Errorf("value is not of type string but of type: %T", value)
+			break
+		}
 		err = r.ActiveKey.SetExpandStringValue(key, value.(string))
 	case registry.MULTI_SZ:
+		if _, ok := value.(string); !ok {
+			err = fmt.Errorf[]("value is not of type string but of type: %T", value)
+			break
+		}
 		err = r.ActiveKey.SetStringsValue(key, value.([]string))
 	case registry.BINARY:
+		if _, ok := value.([]byte); !ok {
+			err = fmt.Errorf("value is not of type []byte but of type: %T", value)
+			break
+		}
 		err = r.ActiveKey.SetBinaryValue(key, value.([]byte))
 	case registry.QWORD:
+		if _, ok := value.(uint64); !ok {
+			err = fmt.Errorf("value is not of type uint64 but of type: %T", value)
+			break
+		}
 		err = r.ActiveKey.SetQWordValue(key, value.(uint64))
 	case registry.DWORD:
+		if _, ok := value.(uint32); !ok {
+			err = fmt.Errorf("value is not of type uint32 but of type: %T", value)
+			break
+		}
 		err = r.ActiveKey.SetDWordValue(key, value.(uint32))
 	}
 
