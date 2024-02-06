@@ -178,7 +178,7 @@ func (r *Reg) CreateValue(key string, value any, valueType uint32) error {
 		err = r.ActiveKey.SetExpandStringValue(key, value.(string))
 	case registry.MULTI_SZ:
 		if _, ok := value.(string); !ok {
-			err = fmt.Errorf[]("value is not of type string but of type: %T", value)
+			err = fmt.Errorf("value is not of type string but of type: %T", value)
 			break
 		}
 		err = r.ActiveKey.SetStringsValue(key, value.([]string))
