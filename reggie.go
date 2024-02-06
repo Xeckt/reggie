@@ -11,14 +11,14 @@ import (
 
 type Reg struct {
 	RootKey    registry.Key       // The key in which to access (HKLM, HKCU, etc). Can also be a subkey
-	OpenedKey  registry.Key       // The key currently opened, if different from the root key (i.e parent key)
+	ActiveKey  registry.Key       // The key currently opened, if different from the root key (i.e parent key)
 	Path       string             // The path inside RootKey to use
 	Permission uint32             // The access type for given RootKey and Path
-	SubKeys    map[string]*SubKey // Holds the subkeys underneath RootKey
+	SubKeyMap  map[string]*SubKey // Holds the subkeys underneath RootKey
 }
 
 type SubKey struct {
-	Key   *Reg           // Holds the subkey information
+	Data  *Reg           // Holds the subkey information
 	Value map[string]any // Holds the key value data stored in each subkey.
 }
 
@@ -26,26 +26,26 @@ type SubKey struct {
 func NewReg(permission uint32) *Reg {
 	return &Reg{
 		Permission: permission,
-		SubKeys:    make(map[string]*SubKey),
+		SubKeyMap:  make(map[string]*SubKey),
 	}
 }
 
-// NewSubKey initialises a struct for Reg.SubKeys.
+// NewSubKey initialises a struct for Reg.SubKeyMap.
 func NewSubKey(permission uint32) *SubKey {
 	return &SubKey{
-		Key:   NewReg(permission),
+		Data:  NewReg(permission),
 		Value: make(map[string]any),
 	}
 }
 
 // OpenKey is used to open a key inside the SubKey struct. Parameter `populateKeyValues` is true or false if you
-// want to populate the SubKeys map with it's held data.
+// want to populate the SubKeyMap map with it's held data.
 func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	k := Reg{
-		RootKey:    s.Key.RootKey,
-		Path:       s.Key.Path,
-		Permission: s.Key.Permission,
-		SubKeys:    make(map[string]*SubKey),
+		RootKey:    s.Data.RootKey,
+		Path:       s.Data.Path,
+		Permission: s.Data.Permission,
+		SubKeyMap:  make(map[string]*SubKey),
 	}
 	if populateKeyValues {
 		err := k.GetKeysValues()
@@ -56,7 +56,7 @@ func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	return &k, nil
 }
 
-// GetKeysValues obtains RootKey, enumerates through each subkey in given Path. Each subkey will be attached inside Reg.SubKeys
+// GetKeysValues obtains RootKey, enumerates through each subkey in given Path. Each subkey will be attached inside Reg.SubKeyMap
 // with its relevant data.
 func (r *Reg) GetKeysValues() error {
 	s, err := r.EnumerateSubKeys()
@@ -75,8 +75,12 @@ func (r *Reg) GetKeysValues() error {
 			return err
 		}
 
-		if r.SubKeys[subkey] == nil {
-			r.SubKeys[subkey] = NewSubKey(r.Permission)
+		if r.SubKeyMap == nil {
+			r.SubKeyMap = make(map[string]*SubKey)
+		}
+
+		if r.SubKeyMap[subkey] == nil {
+			r.SubKeyMap[subkey] = NewSubKey(r.Permission)
 		}
 
 		names, err := key.ReadValueNames(0)
@@ -89,13 +93,13 @@ func (r *Reg) GetKeysValues() error {
 			if err != nil {
 				return err
 			}
-			r.SubKeys[subkey].Value[n] = value
+			r.SubKeyMap[subkey].Value[n] = value
 		}
 
-		r.SubKeys[subkey].Key = &Reg{
+		r.SubKeyMap[subkey].Data = &Reg{
 			Path:       p,
 			RootKey:    r.RootKey,
-			OpenedKey:  key,
+			ActiveKey:  key,
 			Permission: r.Permission,
 		}
 
@@ -163,23 +167,4 @@ func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
 		return nil, err
 	}
 	return sKeys, nil
-}
-
-// Traverse allows you to recursively traverse a given reg object based on its current key.
-func Traverse(r *Reg, getKeyValues bool, fn func(reg *Reg)) error {
-	if fn == nil {
-		return fmt.Errorf("function is nil, traversal cannot continue")
-	}
-
-	for _, s := range r.SubKeys {
-		r, err := s.OpenKey(getKeyValues)
-		if err != nil {
-			return err
-		}
-
-		fn(r)
-		_ = Traverse(r, getKeyValues, fn)
-	}
-
-	return nil
 }
