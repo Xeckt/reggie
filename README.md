@@ -86,3 +86,22 @@ Control Panel\Accessibility -> SoundSentry &{0xc0003fd3e0 map[FSTextEffect:0 Fla
 Control Panel\Accessibility -> Keyboard Preference &{0xc0003fcf30 map[On:0]}
 ...
 ```
+Similarly, you may want to create keys. reggie handles this situation dynamically. Let's say you wanted to create a new subkey
+under `HKCU\Control Panel\Accessibility`:
+```go
+func main() {
+	r := reggie.NewReg(registry.ALL_ACCESS)
+	r.RootKey = registry.CURRENT_USER
+	r.Path = `Control Panel`
+	err := r.GetKeysValues()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = r.SubKeyMap["Accessibility"].Data.CreateKey("NewKey")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+```
+If you wanted to `GetKeysValues` on the `Accessibility` key beforehand, then create one, reggie will automatically populate
+your struct with the new key as well, therefore, you have no need to manually reassign back into your struct.
