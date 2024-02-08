@@ -108,7 +108,8 @@ func (r *Reg) GetKeysValues() error {
 	return nil
 }
 
-// GetValue takes a specified registry key and returns the value of the named key `n`
+// GetValue takes a specified registry key and returns the value of the named key `n`.
+// This is a generic wrapper function over registry.GetValue.
 func (r *Reg) GetValue(k registry.Key, n string) (any, error) {
 	var err error
 	_, t, _ := k.GetValue(n, nil)
