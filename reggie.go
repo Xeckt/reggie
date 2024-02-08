@@ -3,7 +3,6 @@
 package reggie
 
 import (
-	"errors"
 	"fmt"
 	"golang.org/x/sys/windows/registry"
 	"strings"
@@ -218,25 +217,17 @@ func (r *Reg) CreateValue(key string, value any, valueType uint32) error {
 // and find it's subkeys. Amount specifies how many subkeys you want to enumerate.
 // The default value is 0 to enumerate all within a given key, anything above 0 will enumerate to the specified amount.
 // Amount cannot have more than one element. Behaves the same as specified in registry documentation: https://pkg.go.dev/golang.org/x/sys/windows/registry#Key.ReadSubKeyNames
-func (r *Reg) EnumerateSubKeys(amount ...int) ([]string, error) {
-	if len(amount) > 1 {
-		return nil, errors.New("length of amount cannot exceed 1")
-	}
-
+func (r *Reg) EnumerateSubKeys(amount int) ([]string, error) {
 	var sKeys []string
 	key, err := registry.OpenKey(r.RootKey, r.Path, registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(amount) != 0 {
-		sKeys, err = key.ReadSubKeyNames(amount[0])
-	} else {
-		sKeys, err = key.ReadSubKeyNames(0)
-	}
-
+	sKeys, err = key.ReadSubKeyNames(amount)
 	if err != nil {
 		return nil, err
 	}
+
 	return sKeys, nil
 }
