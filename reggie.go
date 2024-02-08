@@ -150,12 +150,10 @@ func (r *Reg) CreateKey(name string) error {
 		return err
 	}
 	if exists {
-		return fmt.Errorf("key %s already exists", name)
+		return fmt.Errorf("key %r already exists", name)
 	}
-	err = r.GetKeysValues() // Repopulate struct with new keys
-	if err != nil {
-		return err
-	}
+	r.SubKeyMap = make(map[string]*SubKey)
+	r.SubKeyMap[name] = NewSubKey(r.Permission)
 	return nil
 }
 
