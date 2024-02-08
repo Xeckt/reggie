@@ -111,8 +111,8 @@ func (r *Reg) GetKeysValues() error {
 // This is a generic wrapper function over registry.GetValue.
 func (r *Reg) GetValue(k registry.Key, n string) (any, error) {
 	var err error
-	_, t, _ := k.GetValue(n, nil)
 	var v any
+	_, t, _ := k.GetValue(n, nil)
 
 	switch t {
 	case registry.NONE:
