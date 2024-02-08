@@ -150,7 +150,7 @@ func (r *Reg) CreateKey(name string) error {
 		return err
 	}
 	if exists {
-		return fmt.Errorf("key %r already exists", name)
+		return fmt.Errorf("key %s already exists", name)
 	}
 	r.SubKeyMap = make(map[string]*SubKey)
 	r.SubKeyMap[name] = NewSubKey(r.Permission)
