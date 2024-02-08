@@ -55,10 +55,10 @@ func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	return &k, nil
 }
 
-// GetKeysValues obtains RootKey, enumerates through each subkey in given Path. Each subkey will be attached inside Reg.SubKeyMap
+// GetKeysValues obtains RootKey, enumerates through every subkey in given Path. Each subkey will be attached inside Reg.SubKeyMap
 // with its relevant data.
 func (r *Reg) GetKeysValues() error {
-	s, err := r.EnumerateSubKeys()
+	s, err := r.EnumerateSubKeys(0)
 	if err != nil {
 		return err
 	}
