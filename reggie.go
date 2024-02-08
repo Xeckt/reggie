@@ -103,7 +103,6 @@ func (r *Reg) GetKeysValues() error {
 				r.SubKeyMap[subkey].Value[n] = value
 			}
 		}
-
 	}
 	return nil
 }
@@ -229,6 +228,17 @@ func (r *Reg) EnumerateSubKeys(amount int) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return sKeys, nil
+}
+
+func (r *Reg) Close() (bool, error) {
+	err := r.ActiveKey.Close()
+	if err != nil {
+		return false, err
+	}
+	err = r.RootKey.Close()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
