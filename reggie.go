@@ -29,7 +29,7 @@ func NewReg(permission uint32) *Reg {
 	}
 }
 
-// NewSubKey initialises a struct for Reg.SubKeyMap.
+// NewSubKey initialises a struct for Reg.SubKeyMap. Permission can be supplied via go's registry package.
 func NewSubKey(permission uint32) *SubKey {
 	return &SubKey{
 		Data:  NewReg(permission),
@@ -47,7 +47,7 @@ func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 		SubKeyMap:  make(map[string]*SubKey),
 	}
 	if populateKeyValues {
-		err := k.GetKeysValues()
+		err := k.FillKeysValues()
 		if err != nil {
 			return nil, err
 		}
@@ -55,9 +55,9 @@ func (s *SubKey) OpenKey(populateKeyValues bool) (*Reg, error) {
 	return &k, nil
 }
 
-// GetKeysValues obtains RootKey, enumerates through every subkey in given Path. Each subkey will be attached inside Reg.SubKeyMap
+// FillKeysValues obtains RootKey, enumerates through every subkey in given Path. Each subkey will be attached inside Reg.SubKeyMap
 // with its relevant data.
-func (r *Reg) GetKeysValues() error {
+func (r *Reg) FillKeysValues() error {
 	s, err := r.EnumerateSubKeys(0)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (r *Reg) GetKeysValues() error {
 }
 
 // GetValue takes a specified registry key and returns the value of the named key `n`.
-// This is a generic wrapper function over registry.GetValue.
+// This is a generic wrapper function over registry.GetValue
 func (r *Reg) GetValue(k registry.Key, n string) (any, error) {
 	var err error
 	var v any
@@ -142,7 +142,7 @@ func (r *Reg) GetValue(k registry.Key, n string) (any, error) {
 	return v, nil
 }
 
-// CreateKey creates a child key from the Reg.ActiveKey
+// CreateKey creates a child key from the Reg.ActiveKey and add it to the current SubKeyMap
 func (r *Reg) CreateKey(name string) error {
 	_, exists, err := registry.CreateKey(r.ActiveKey, name, r.Permission)
 	if err != nil {
@@ -205,7 +205,7 @@ func (r *Reg) CreateValue(key string, value any, valueType uint32) error {
 		return err
 	}
 
-	err = r.GetKeysValues()
+	err = r.FillKeysValues()
 	if err != nil {
 		return err
 	}
@@ -231,6 +231,8 @@ func (r *Reg) EnumerateSubKeys(amount int) ([]string, error) {
 	return sKeys, nil
 }
 
+// Close will close the current RootKey and ActiveKey. After closing, it will clear the SubKeyMap of the specified Reg
+// object
 func (r *Reg) Close() (bool, error) {
 	err := r.ActiveKey.Close()
 	if err != nil {
