@@ -240,5 +240,6 @@ func (r *Reg) Close() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	clear(r.SubKeyMap)
 	return true, nil
 }
