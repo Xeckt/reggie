@@ -1,60 +1,107 @@
 # reggie
+[![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
+
 A small wrapper over Go's std [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry) package.
 
 Documentation and examples are available here: [Documentation](#Documentation)
 # Summary
-[Go's registry package](https://pkg.go.dev/golang.org/x/sys/windows/registry) becomes a bit tedious when handling
-a lot of keys inside the registry at once, and fetching data from them. 
+[Go's registry package](https://pkg.go.dev/golang.org/x/sys/windows/registry) is extremely useful but limitations arise where
+you have a wider range of requirements, thus requiring customised functions to handle the use case. 
 
-So, reggie helps handle situations where you are dealing with larger sets of registry data.
+Reggie assists on that front and gives you wider, structured utilities and access for handling the registry.
 
 # Using Reggie
 ```
 go get github.com/Xeckt/reggie
 ```
 
-# Documentation
-[![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
-
-You usually start by defining a `Reggie.Reg` struct object, either with the `New()` func or by populating the struct yourself.
-It uses the same format as the [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry) package with minor additions.
+# Examples
+Let's take an example where you want to access a *set* of registry keys, in the std package, it would look like:
 ```go
-r := reggie.New()
-r.Key = registry.LOCAL_MACHINE
-r.Path = `System\CurrentControlSet`
+func main() {
+	key, _, err := registry.CreateKey(registry.CURRENT_USER, `Control Panel`, registry.ALL_ACCESS)
+	if err != nil {
+		log.Fatal(err)
+	}
+	subkeys, err := key.ReadSubKeyNames(0)
+	for _, subkey := range subkeys {
+		key, _, err := registry.CreateKey(registry.CURRENT_USER, `Control Panel\`+subkey, registry.ALL_ACCESS)
+		if err != nil {
+			log.Fatal(err)
+		}
+		moreKeys, err := key.ReadSubKeyNames(0)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, k := range moreKeys {
+			fmt.Println(subkey, "->", k)
+		}
+	}
+}
 ```
-From here you have few options. Reggie can enumerate through the subkey names for you such as the provided location above, but we will take advantage
-of the `GetSubKeysValues()` function. Which will populate the `SubKeys` map in our struct with the specified registry locations
-key data.
+It's quite something, additionally you would need to add your own magic. We will use `reggie` to do the exact same as the above:
 ```go
-err := r.GetSubKeysValues()
-if err != nil {
-	log.Fatal(err)
-}
-for key, subkey := range r.SubKeys {
-    fmt.Println(key, subkey.Value)
+func main() {
+	r := reggie.NewReg(registry.ALL_ACCESS)
+	r.RootKey = registry.CURRENT_USER
+	r.Path = `Control Panel`
+	err := r.GetKeysValues() // Reggie will populate its own structs
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = r.SubKeyMap["Accessibility"].Data.GetKeysValues()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Control panel subkeys -> ", r.SubKeyMap, "\nControl Panel - Accessibility Subkeys ->",
+		r.SubKeyMap["Accessibility"].Data)
 }
 ```
-If you know what you're looking for specifically, you have a few approaches, and reggie still allows you to utilise the [std registry package functions](https://pkg.go.dev/golang.org/x/sys/windows/registry):
+If we wanted to shorten that further, `reggie` has a recursive function `Traverse()`, which allows you to do bulk actions:
 ```go
-r := reggie.New()
-r.RootKey = registry.LOCAL_MACHINE
-r.Path = `SOFTWARE`
-err := r.GetKeysValues()
-if err != nil {
-	log.Fatal(err)
+func main() {
+	r := reggie.NewReg(registry.ALL_ACCESS)
+	r.RootKey = registry.CURRENT_USER
+	r.Path = `Control Panel`
+	err := r.GetKeysValues()
+	if err != nil {
+		log.Fatal(err)
+	}
+	reggie.Traverse(r, true, func(reg *reggie.Reg) {
+		for key, value := range reg.SubKeyMap {
+            fmt.Println(reg.Path, "->", key, value)
+		}
+	})
 }
-teamviewer := r.SubKeys["TeamViewer"]
-fmt.Println(teamviewer.Value["Version"])
-fmt.Println(teamviewer.Key.OpenedKey.GetStringValue("Version"))
 ```
-We could take this a step further by trailing into `TeamViewer` subkeys as well, by taking advantage of the `OpenKey(bool)` function
-and setting its parameter to true, otherwise it creates an empty subkey map for you to handle while keeping related key objects. Useful when you are
-handling situations where string magic is necessary:
+Given the registry path above, output would look like:
+```
+Control Panel\Accessibility -> ToggleKeys &{0xc0003fd620 map[Flags:62]}
+Control Panel\Accessibility -> HighContrast &{0xc0003fce40 map[Flags:126 High Contrast Scheme: Previous High Contrast Scheme MUI Value:]}
+Control Panel\Accessibility -> On &{0xc0003fd1a0 map[Locale:0 On:0]}
+Control Panel\Accessibility -> SlateLaunch &{0xc0003fd320 map[ATapp:narrator LaunchAT:1]}
+Control Panel\Accessibility -> Blind Access &{0xc0003fcd80 map[On:0]}
+Control Panel\Accessibility -> ShowSounds &{0xc0003fd260 map[On:0]}
+Control Panel\Accessibility -> SoundSentry &{0xc0003fd3e0 map[FSTextEffect:0 Flags:2 TextEffect:0 WindowsEffect:1]}
+Control Panel\Accessibility -> Keyboard Preference &{0xc0003fcf30 map[On:0]}
+...
+```
+Similarly, you may want to create keys. reggie handles this situation dynamically. Let's say you wanted to create a new subkey
+under `HKCU\Control Panel\Accessibility`:
 ```go
-s, err := r.SubKeys["TeamViewer"].OpenKey(true)
-if err != nil {
-	log.Fatal(err)
+func main() {
+	r := reggie.NewReg(registry.ALL_ACCESS)
+	r.RootKey = registry.CURRENT_USER
+	r.Path = `Control Panel`
+	err := r.GetKeysValues()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = r.SubKeyMap["Accessibility"].Data.CreateKey("NewKey")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
-fmt.Println(s.SubKeys) // Returns a map of the subkeys you can use as normal registry.Key objects
 ```
+If you wanted to `GetKeysValues` on the `Accessibility` key beforehand, then create one, reggie will automatically populate
+your struct with the new key as well, therefore, you have no need to manually reassign back into your struct.
