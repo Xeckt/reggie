@@ -69,7 +69,7 @@ func main() {
 	}
 	reggie.Traverse(r, true, func(reg *reggie.Reg) {
 		for key, value := range reg.SubKeyMap {
-            fmt.Println(reg.Path, "->", key, value)
+			fmt.Println(reg.Path, "->", key, value)
 		}
 	})
 }
