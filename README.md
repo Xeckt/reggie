@@ -1,9 +1,8 @@
 # reggie
-[![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
+[![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie?GOOS=windows)
 
 A small wrapper over Go's std [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry) package.
 
-Documentation and examples are available here: [Documentation](#Documentation)
 # Summary
 [Go's registry package](https://pkg.go.dev/golang.org/x/sys/windows/registry) is extremely useful but limitations arise where
 you have a wider range of requirements, thus requiring customised functions to handle the use case. 
