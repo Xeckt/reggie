@@ -96,6 +96,28 @@ func (k *Key) Load(limit int) error {
 	return nil
 }
 
+func (k *Key) Walk(fn func(k *Key) error) error {
+	if err := fn(k); err != nil {
+		return err
+	}
+
+	if !k.Loaded {
+		if err := k.Load(0); err != nil {
+			return fmt.Errorf("walk failed to load subkeys: %w", err)
+		}
+	}
+
+	for _, sub := range k.Subkeys {
+		if sub.Child != nil {
+			if err := sub.Child.Walk(fn); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // Close closes the key
 func (k *Key) Close() error {
 	err := k.Handle.Close()
