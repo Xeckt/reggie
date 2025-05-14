@@ -37,7 +37,7 @@ func (k *Key) CreateKey(path string, access uint32) (*Key, error) {
 		return nil, fmt.Errorf("Unable to create key %s: %w", k.Path, err)
 	}
 	if openedExisting {
-		return nil, fmt.Errorf("Unable to create key %s: already exists", path)
+		return nil, fmt.Errorf("Unable to create key %s for %s: already exists", path, k.Path)
 	}
 	return &Key{handle, path, nil, false}, nil
 }
