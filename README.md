@@ -1,9 +1,8 @@
 # reggie
-[![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
+[![Go Reference](https://pkg.go.dev/badge/pkg.go.dev/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie?GOOS=windows)
 
 A small wrapper over Go's std [registry](https://pkg.go.dev/golang.org/x/sys/windows/registry) package.
 
-Documentation and examples are available here: [Documentation](#Documentation)
 # Summary
 [Go's registry package](https://pkg.go.dev/golang.org/x/sys/windows/registry) is extremely useful but limitations arise where
 you have a wider range of requirements, thus requiring customised functions to handle the use case. 
@@ -45,7 +44,7 @@ func main() {
 	r := reggie.NewReg(registry.ALL_ACCESS)
 	r.RootKey = registry.CURRENT_USER
 	r.Path = `Control Panel`
-	err := r.GetKeysValues() // Reggie will populate its own structs
+	err := r.FillKeysValues() // Reggie will populate its own structs
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,13 +62,13 @@ func main() {
 	r := reggie.NewReg(registry.ALL_ACCESS)
 	r.RootKey = registry.CURRENT_USER
 	r.Path = `Control Panel`
-	err := r.GetKeysValues()
+	err := r.FillKeysValues()
 	if err != nil {
 		log.Fatal(err)
 	}
 	reggie.Traverse(r, true, func(reg *reggie.Reg) {
 		for key, value := range reg.SubKeyMap {
-            fmt.Println(reg.Path, "->", key, value)
+			fmt.Println(reg.Path, "->", key, value)
 		}
 	})
 }
@@ -93,7 +92,7 @@ func main() {
 	r := reggie.NewReg(registry.ALL_ACCESS)
 	r.RootKey = registry.CURRENT_USER
 	r.Path = `Control Panel`
-	err := r.GetKeysValues()
+	err := r.FillKeysValues()
 	if err != nil {
 		log.Fatal(err)
 	}
