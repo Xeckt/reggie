@@ -79,7 +79,7 @@ func (k *Key) Load(limit int) error {
 		valNames, _ := h.Handle.ReadValueNames(-1)
 
 		for _, v := range valNames {
-			raw, _ := GetValue(h.Handle, v)
+			raw, _ := k.GetValue(v)
 			values[v] = raw
 		}
 
@@ -96,6 +96,7 @@ func (k *Key) Load(limit int) error {
 	return nil
 }
 
+// Walk will recursively traverse all keys and subkeys
 func (k *Key) Walk(fn func(k *Key) error) error {
 	if err := fn(k); err != nil {
 		return err
