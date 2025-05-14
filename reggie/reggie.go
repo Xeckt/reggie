@@ -42,8 +42,9 @@ func (k *Key) CreateKey(path string, access uint32) (*Key, error) {
 	return &Key{handle, path, nil, false}, nil
 }
 
-// Load will
-func (k *Key) Load() error {
+// Load will get the current key you have opened and then enumerate through it,
+// Finding further subkeys and values.
+func (k *Key) Load(limit int) error {
 	if k.Loaded {
 		return fmt.Errorf("Cannot load data for %s: already loaded", k.Path)
 	}
@@ -53,8 +54,14 @@ func (k *Key) Load() error {
 		return err
 	}
 
+	numberLoaded := 0
+
 	k.Subkeys = make(map[string]*SubKey)
 	for _, name := range names {
+
+		if limit > 0 && numberLoaded == limit {
+			break
+		}
 
 		childPath := k.Path + `\` + name
 
@@ -81,10 +88,11 @@ func (k *Key) Load() error {
 			Child:  child,
 			Values: values,
 		}
+
+		numberLoaded++
 	}
 
 	k.Loaded = true
-
 	return nil
 }
 
