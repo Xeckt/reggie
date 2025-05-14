@@ -42,15 +42,7 @@ func (k *Key) CreateKey(path string, access uint32) (*Key, error) {
 	return &Key{handle, path, nil, false}, nil
 }
 
-// Close closes the key
-func (k *Key) Close() error {
-	err := k.Handle.Close()
-	if err != nil {
-		return fmt.Errorf("Unable to close key %s: %w", k.Path, err)
-	}
-	return nil
-}
-
+// Load will
 func (k *Key) Load() error {
 	if k.Loaded {
 		return fmt.Errorf("Cannot load data for %s: already loaded", k.Path)
@@ -66,21 +58,21 @@ func (k *Key) Load() error {
 
 		childPath := k.Path + `\` + name
 
-		h, err := registry.OpenKey(k.Handle, name, registry.READ)
+		h, err := OpenKey(k.Handle, name, registry.READ)
 		if err != nil {
 			continue
 		}
 
 		child := &Key{
-			Handle: h,
+			Handle: h.Handle,
 			Path:   childPath,
 		}
 
 		values := make(map[string]any)
-		valNames, _ := h.ReadValueNames(-1)
+		valNames, _ := h.Handle.ReadValueNames(-1)
 
 		for _, v := range valNames {
-			raw, _ := GetValue(h, v)
+			raw, _ := GetValue(h.Handle, v)
 			values[v] = raw
 		}
 
@@ -93,5 +85,14 @@ func (k *Key) Load() error {
 
 	k.Loaded = true
 
+	return nil
+}
+
+// Close closes the key
+func (k *Key) Close() error {
+	err := k.Handle.Close()
+	if err != nil {
+		return fmt.Errorf("Unable to close key %s: %w", k.Path, err)
+	}
 	return nil
 }
