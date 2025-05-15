@@ -13,32 +13,33 @@ func containsZeroByte(s string) bool {
 	return strings.IndexByte(s, 0) != -1
 }
 
-// GetValue takes a specified registry key and returns the value of the named key `n`.
-// This is a generic wrapper function over registry.GetValue
-func (k *Key) GetValue(n string) (any, error) {
+// Obtains a value from the key `name`.
+// It will get any type from the registry without needing
+// to specify the specific registry.GetXValue(...) functions.
+func (k *Key) GetValue(name string) (any, error) {
 	var err error
 	var v any
-	_, t, _ := k.Handle.GetValue(n, nil)
+	_, t, _ := k.Handle.GetValue(name, nil)
 
 	switch t {
 	case registry.NONE:
 		return nil, nil // Allow nil checks
 
 	case registry.SZ:
-		v, _, err = k.Handle.GetStringValue(n)
+		v, _, err = k.Handle.GetStringValue(name)
 
 	case registry.EXPAND_SZ:
-		v, _, err = k.Handle.GetStringValue(n)
+		v, _, err = k.Handle.GetStringValue(name)
 		v, err = registry.ExpandString(v.(string))
 
 	case registry.DWORD, registry.QWORD:
-		v, _, err = k.Handle.GetIntegerValue(n)
+		v, _, err = k.Handle.GetIntegerValue(name)
 
 	case registry.BINARY:
-		v, _, err = k.Handle.GetBinaryValue(n)
+		v, _, err = k.Handle.GetBinaryValue(name)
 
 	case registry.MULTI_SZ:
-		v, _, err = k.Handle.GetStringsValue(n)
+		v, _, err = k.Handle.GetStringsValue(name)
 	}
 
 	if err != nil {
@@ -48,6 +49,8 @@ func (k *Key) GetValue(n string) (any, error) {
 	return v, nil
 }
 
+// Creates a value in accordance with the std registry package constraints.
+// Supports all known types of values.
 func (k *Key) CreateValue(key string, value any, valueType uint32) error {
 	var err error
 
@@ -102,6 +105,8 @@ func (k *Key) CreateValue(key string, value any, valueType uint32) error {
 		}
 
 		err = k.Handle.SetDWordValue(key, v)
+	default:
+		return fmt.Errorf("Unable to match case for CreateValue value %v", value)
 	}
 
 	if err != nil {
@@ -111,7 +116,7 @@ func (k *Key) CreateValue(key string, value any, valueType uint32) error {
 	return nil
 }
 
-// DeleteValue safely checks if the value exists and deletes it.
+// Safely checks if the value exists and deletes it.
 func (k *Key) DeleteValue(name string) error {
 	err := k.Handle.DeleteValue(name)
 	if err != nil {
@@ -124,7 +129,7 @@ func (k *Key) DeleteValue(name string) error {
 	return nil
 }
 
-// GetValueAndNames() gets all key=>value pairs from the specified key
+// Obtains all key=>value pairs from the specified key
 func (k *Key) GetValueAndNames() (map[string]any, error) {
 	valNames, err := k.Handle.ReadValueNames(-1)
 	if err != nil {

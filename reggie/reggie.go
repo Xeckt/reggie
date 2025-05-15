@@ -24,7 +24,7 @@ type SubKey struct {
 	Child  *Key           // Child keys inside the subkey
 }
 
-// LoadWithLimit will get the current key you have opened and then enumerate it
+// Will get the current key you have opened and then enumerate it
 // for futher subkeys and it's children.
 // `limit` is an integer to specify if you want to only load x amount of items.
 func (k *Key) LoadWithLimit(limit int) error {
@@ -87,13 +87,20 @@ func (k *Key) LoadWithLimit(limit int) error {
 	return nil
 }
 
-// Load calls LoadWithLimit(0) for an explicit way to load keys
+// Calls LoadWithLimit(0) for an explicit way to load keys
 // with no limit.
 func (k *Key) Load() error {
 	return k.LoadWithLimit(0)
 }
 
-// Walk will recursively traverse all keys and subkeys
+// Recursively traverses the key and all of its loaded subkeys,
+// applying the provided function `fn` to each *Key in depth-first order.
+//
+// If the key has not been loaded yet, Walk will call Load() automatically
+// to populate subkeys before continuing traversal.
+//
+// If fn returns an error at any point, Walk stops immediately and returns
+// that error.
 func (k *Key) Walk(fn func(k *Key) error) error {
 	if err := fn(k); err != nil {
 		return err

@@ -16,6 +16,7 @@ type subKeyJson struct {
 	Child  *keyJson       `json:"child,omitempty"`
 }
 
+// Marshals the current key object into JSON.
 func (k *Key) ExportJson() ([]byte, error) {
 	return json.MarshalIndent(convertKey(k), "", " ")
 }
