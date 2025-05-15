@@ -1,8 +1,10 @@
 package reggie
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+	"syscall"
 
 	"golang.org/x/sys/windows/registry"
 )
@@ -109,18 +111,16 @@ func (k *Key) CreateValue(key string, value any, valueType uint32) error {
 	return nil
 }
 
-func (k *Key) DeleteValue(value string) error {
-	v, err := k.GetValue(value)
+// DeleteValue safely checks if the value exists and deletes it.
+func (k *Key) DeleteValue(name string) error {
+	err := k.Handle.DeleteValue(name)
 	if err != nil {
-		return err
+		if errors.Is(err, syscall.ENOENT) || strings.Contains(err.Error(), "The system cannot find the file specified") {
+			return fmt.Errorf("value %q not found in key %s", name, k.Path)
+		}
+		return fmt.Errorf("failed to delete value %q in %s: %w", name, k.Path, err)
 	}
-	if v == nil {
-		return fmt.Errorf("There is no value %s in %s", value, k.Path)
-	}
-	err = k.Handle.DeleteValue(value)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
