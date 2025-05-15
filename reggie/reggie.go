@@ -58,8 +58,8 @@ func (k *Key) LoadWithLimit(limit int) error {
 	numberLoaded := 0
 
 	k.Subkeys = make(map[string]*SubKey)
-	for _, name := range names {
 
+	for _, name := range names {
 		if limit > 0 && numberLoaded == limit {
 			break
 		}
@@ -67,8 +67,9 @@ func (k *Key) LoadWithLimit(limit int) error {
 		childPath := k.Path + `\` + name
 
 		h, err := OpenKey(k.Handle, name, registry.READ)
+
 		if err != nil {
-			continue
+			return err
 		}
 
 		child := &Key{
@@ -76,12 +77,9 @@ func (k *Key) LoadWithLimit(limit int) error {
 			Path:   childPath,
 		}
 
-		values := make(map[string]any)
-		valNames, _ := h.Handle.ReadValueNames(-1)
-
-		for _, v := range valNames {
-			raw, _ := k.GetValue(v)
-			values[v] = raw
+		values, err := child.GetValueAndNames()
+		if err != nil {
+			return err
 		}
 
 		k.Subkeys[name] = &SubKey{
@@ -89,6 +87,8 @@ func (k *Key) LoadWithLimit(limit int) error {
 			Child:  child,
 			Values: values,
 		}
+
+		k.Subkeys[name].Child.Loaded = true
 
 		numberLoaded++
 	}
@@ -103,6 +103,23 @@ func (k *Key) Load() error {
 	return k.LoadWithLimit(0)
 }
 
+// GetValueAndNames() gets all key=>value pairs from the specified key
+func (k *Key) GetValueAndNames() (map[string]any, error) {
+	valNames, err := k.Handle.ReadValueNames(-1)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read value names for %s: %w", k.Path, err)
+	}
+
+	values := make(map[string]any)
+
+	for _, v := range valNames {
+		raw, _ := k.GetValue(v)
+		values[v] = raw
+	}
+
+	return values, nil
+}
+
 // Walk will recursively traverse all keys and subkeys
 func (k *Key) Walk(fn func(k *Key) error) error {
 	if err := fn(k); err != nil {
@@ -110,7 +127,7 @@ func (k *Key) Walk(fn func(k *Key) error) error {
 	}
 
 	if !k.Loaded {
-		if err := k.Load(0); err != nil {
+		if err := k.Load(); err != nil {
 			return fmt.Errorf("walk failed to load subkeys: %w", err)
 		}
 	}
