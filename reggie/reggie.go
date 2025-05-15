@@ -121,11 +121,11 @@ func (k *Key) GetValueAndNames() (map[string]any, error) {
 	values := make(map[string]any)
 
 	for _, v := range valNames {
-		raw, err := k.GetValue(v)
+		valData, err := k.GetValue(v)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to get value for %s: %w", v, err)
 		}
-		values[v] = raw
+		values[v] = valData
 	}
 
 	return values, nil
