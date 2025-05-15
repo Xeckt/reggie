@@ -85,6 +85,8 @@ func (k *Key) LoadWithLimit(limit int) error {
 	return nil
 }
 
+// DeepLoad is a recursive function to load
+// keys that inside subkeys and so forth without limitation
 func (k *Key) DeepLoad() error {
 	if err := k.Load(); err != nil {
 		return err
