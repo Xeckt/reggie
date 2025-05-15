@@ -6,21 +6,23 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+// Represents a registry key layout
 type Key struct {
-	Handle  registry.Key
-	Path    string
-	Subkeys map[string]*SubKey
-	Values  map[string]any
-	Loaded  bool
+	Handle  registry.Key       // Parent registry key
+	Path    string             // Path of the parent registry key
+	Subkeys map[string]*SubKey // Map of subkeys from the opened registry key
+	Values  map[string]any     // Values inside the parent registry key
+	Loaded  bool               // Represents if the key has had its values / subkeys loaded
 }
 
+// Represents a registry subkey layout
 type SubKey struct {
-	Name   string
-	Values map[string]any
-	Child  *Key
+	Name   string         // Name of the subkey
+	Values map[string]any // Values inside the subkey
+	Child  *Key           // Child keys inside the subkey
 }
 
-// Open opens an existing key.
+// Open opens an existing registry key.
 func OpenKey(root registry.Key, path string, access uint32) (*Key, error) {
 	handle, err := registry.OpenKey(root, path, access)
 	if err != nil {
