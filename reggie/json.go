@@ -4,16 +4,16 @@ import "encoding/json"
 
 type keyJson struct {
 	Path       string                 `json:"path"`
-	Values     map[string]any         `json:"values,omitempty"`
-	Subkeys    map[string]*subKeyJson `json:"subkeys,omitempty"`
 	Permission uint32                 `json:"permission"`
 	Loaded     bool                   `json:"loaded"`
+	Values     map[string]any         `json:"values,omitempty"`
+	Subkeys    map[string]*subKeyJson `json:"subkeys,omitempty"`
 }
 
 type subKeyJson struct {
 	Name   string         `json:"name"`
-	Values map[string]any `json:"values,omitempty"`
 	Child  *keyJson       `json:"child,omitempty"`
+	Values map[string]any `json:"values,omitempty"`
 }
 
 // Marshals the current key object into JSON.
