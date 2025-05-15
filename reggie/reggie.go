@@ -82,10 +82,8 @@ func (k *Key) LoadWithLimit(limit int) error {
 			return err
 		}
 
-		child := &Key{
-			Handle: h.Handle,
-			Path:   childPath,
-		}
+		child := h
+		child.Path = childPath
 
 		valData, err := child.GetValueAndNames()
 		if err != nil {
@@ -123,7 +121,10 @@ func (k *Key) GetValueAndNames() (map[string]any, error) {
 	values := make(map[string]any)
 
 	for _, v := range valNames {
-		raw, _ := k.GetValue(v)
+		raw, err := k.GetValue(v)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to get value for %s: %w", v, err)
+		}
 		values[v] = raw
 	}
 
