@@ -83,3 +83,37 @@ func (k *Key) CreateValue(key string, value any, valueType uint32) error {
 
 	return nil
 }
+
+func (k *Key) DeleteValue(value string) error {
+	v, err := k.GetValue(value)
+	if err != nil {
+		return err
+	}
+	if v != nil {
+		err := k.Handle.DeleteValue(value)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetValueAndNames() gets all key=>value pairs from the specified key
+func (k *Key) GetValueAndNames() (map[string]any, error) {
+	valNames, err := k.Handle.ReadValueNames(-1)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read value names for %s: %w", k.Path, err)
+	}
+
+	values := make(map[string]any)
+
+	for _, v := range valNames {
+		valData, err := k.GetValue(v)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to get value for %s: %w", v, err)
+		}
+		values[v] = valData
+	}
+
+	return values, nil
+}
