@@ -13,10 +13,10 @@ So far:
 
 v1 release roadmap will have the following:
 
-[ ] - Export key datasets to JSON
+- [x] - Export key datasets to JSON
 
-[ ] - New helper functions such as `MustOpen()` or `MustCreate()` for quick testing / scripts
+- [ ] - New helper functions such as `MustOpen()` or `MustCreate()` for quick testing / scripts
 
-[ ] - Key / Value searching
+- [ ] - Key / Value searching
 
 More ideas soon to come.
