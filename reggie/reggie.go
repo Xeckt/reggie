@@ -10,6 +10,7 @@ type Key struct {
 	Handle  registry.Key
 	Path    string
 	Subkeys map[string]*SubKey
+	Values  map[string]any
 	Loaded  bool
 }
 
@@ -25,7 +26,7 @@ func OpenKey(root registry.Key, path string, access uint32) (*Key, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to open key %s: %w", path, err)
 	}
-	return &Key{handle, path, nil, false}, nil
+	return &Key{handle, path, nil, nil, false}, nil
 }
 
 // Create creates a new key. This function will error if the key already
@@ -39,7 +40,7 @@ func (k *Key) CreateKey(path string, access uint32) (*Key, error) {
 	if openedExisting {
 		return nil, fmt.Errorf("Unable to create key %s for %s: already exists", path, k.Path)
 	}
-	return &Key{handle, path, nil, false}, nil
+	return &Key{handle, path, nil, nil, false}, nil
 }
 
 // LoadWithLimit will get the current key you have opened and then enumerate it
@@ -48,6 +49,15 @@ func (k *Key) CreateKey(path string, access uint32) (*Key, error) {
 func (k *Key) LoadWithLimit(limit int) error {
 	if k.Loaded {
 		return fmt.Errorf("Cannot load data for %s: already loaded", k.Path)
+	}
+
+	valData, err := k.GetValueAndNames() // Make sure we load the the current keys data and not just subkeys
+	if err != nil {
+		return err
+	}
+
+	if valData != nil {
+		k.Values = valData
 	}
 
 	names, err := k.Handle.ReadSubKeyNames(-1)
@@ -77,7 +87,7 @@ func (k *Key) LoadWithLimit(limit int) error {
 			Path:   childPath,
 		}
 
-		values, err := child.GetValueAndNames()
+		valData, err := child.GetValueAndNames()
 		if err != nil {
 			return err
 		}
@@ -85,7 +95,7 @@ func (k *Key) LoadWithLimit(limit int) error {
 		k.Subkeys[name] = &SubKey{
 			Name:   name,
 			Child:  child,
-			Values: values,
+			Values: valData,
 		}
 
 		k.Subkeys[name].Child.Loaded = true
