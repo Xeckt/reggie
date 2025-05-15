@@ -26,12 +26,10 @@ type SubKey struct {
 
 // Will get the current key you have opened and then enumerate it
 // for futher subkeys and it's children.
-// `limit` is an integer to specify if you want to only load x amount of items.
+// `limit` is an integer to specify if you want to only load x amount of items
+// from the current key. LoadWithLimit will only do a shallow read one level down
+// If you want full, recursive deep loading see DeepLoad
 func (k *Key) LoadWithLimit(limit int) error {
-	if k.Loaded {
-		return fmt.Errorf("Cannot load data for %s: already loaded", k.Path)
-	}
-
 	valData, err := k.GetValueAndNames() // Make sure we load the the current keys data and not just subkeys
 	if err != nil {
 		return err
@@ -84,6 +82,22 @@ func (k *Key) LoadWithLimit(limit int) error {
 	}
 
 	k.Loaded = true
+	return nil
+}
+
+func (k *Key) DeepLoad() error {
+	if err := k.Load(); err != nil {
+		return err
+	}
+
+	for _, sub := range k.Subkeys {
+		if sub.Child != nil {
+			if err := sub.Child.DeepLoad(); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
