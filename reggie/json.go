@@ -3,10 +3,11 @@ package reggie
 import "encoding/json"
 
 type keyJson struct {
-	Path    string                 `json:"path"`
-	Values  map[string]any         `json:"values,omitempty"`
-	Subkeys map[string]*subKeyJson `json:"subkeys,omitempty"`
-	Loaded  bool                   `json:"loaded"`
+	Path       string                 `json:"path"`
+	Values     map[string]any         `json:"values,omitempty"`
+	Subkeys    map[string]*subKeyJson `json:"subkeys,omitempty"`
+	Permission uint32                 `json:permission`
+	Loaded     bool                   `json:"loaded"`
 }
 
 type subKeyJson struct {
