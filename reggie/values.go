@@ -2,9 +2,14 @@ package reggie
 
 import (
 	"fmt"
+	"strings"
 
 	"golang.org/x/sys/windows/registry"
 )
+
+func containsZeroByte(s string) bool {
+	return strings.IndexByte(s, 0) != -1
+}
 
 // GetValue takes a specified registry key and returns the value of the named key `n`.
 // This is a generic wrapper function over registry.GetValue
@@ -46,35 +51,55 @@ func (k *Key) CreateValue(key string, value any, valueType uint32) error {
 
 	switch valueType {
 	case registry.SZ:
-		if _, ok := value.(string); !ok {
+		v, ok := value.(string)
+		if !ok {
 			return fmt.Errorf("value is not of type string but of type: %T", value)
 		}
-		err = k.Handle.SetStringValue(key, value.(string))
+
+		if containsZeroByte(v) {
+			return fmt.Errorf("value for %q contains a zero byte, which is not allowed", key)
+		}
+
+		err = k.Handle.SetStringValue(key, v)
 	case registry.EXPAND_SZ:
-		if _, ok := value.(string); !ok {
+		v, ok := value.(string)
+		if !ok {
 			return fmt.Errorf("value is not of type string but of type: %T", value)
 		}
-		err = k.Handle.SetExpandStringValue(key, value.(string))
+
+		if containsZeroByte(v) {
+			return fmt.Errorf("value for %q contains a zero byte, which is not allowed", key)
+		}
+
+		err = k.Handle.SetExpandStringValue(key, v)
 	case registry.MULTI_SZ:
-		if _, ok := value.(string); !ok {
+		v, ok := value.([]string)
+		if !ok {
 			return fmt.Errorf("value is not of type string but of type: %T", value)
 		}
-		err = k.Handle.SetStringsValue(key, value.([]string))
+
+		err = k.Handle.SetStringsValue(key, v)
 	case registry.BINARY:
-		if _, ok := value.([]byte); !ok {
+		v, ok := value.([]byte)
+		if !ok {
 			return fmt.Errorf("value is not of type []byte but of type: %T", value)
 		}
-		err = k.Handle.SetBinaryValue(key, value.([]byte))
+
+		err = k.Handle.SetBinaryValue(key, v)
 	case registry.QWORD:
-		if _, ok := value.(uint64); !ok {
+		v, ok := value.(uint64)
+		if !ok {
 			return fmt.Errorf("value is not of type uint64 but of type: %T", value)
 		}
-		err = k.Handle.SetQWordValue(key, value.(uint64))
+
+		err = k.Handle.SetQWordValue(key, v)
 	case registry.DWORD:
-		if _, ok := value.(uint32); !ok {
+		v, ok := value.(uint32)
+		if !ok {
 			return fmt.Errorf("value is not of type uint32 but of type: %T", value)
 		}
-		err = k.Handle.SetDWordValue(key, value.(uint32))
+
+		err = k.Handle.SetDWordValue(key, v)
 	}
 
 	if err != nil {
