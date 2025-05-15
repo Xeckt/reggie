@@ -2,17 +2,19 @@ package reggie
 
 import (
 	"fmt"
+	"maps"
 
 	"golang.org/x/sys/windows/registry"
 )
 
 // Represents a registry key layout
 type Key struct {
-	Handle  registry.Key       // Parent registry key
-	Path    string             // Path of the parent registry key
-	Subkeys map[string]*SubKey // Map of subkeys from the opened registry key
-	Values  map[string]any     // Values inside the parent registry key
-	Loaded  bool               // Represents if the key has had its values / subkeys loaded
+	Handle     registry.Key       // Parent registry key
+	Path       string             // Path of the parent registry key
+	Subkeys    map[string]*SubKey // Map of subkeys from the opened registry key
+	Values     map[string]any     // Values inside the parent registry key
+	Permission uint32             // Permission used for the key
+	Loaded     bool               // Represents if the key has had its values / subkeys loaded
 }
 
 // Represents a registry subkey layout
@@ -36,7 +38,8 @@ func (k *Key) LoadWithLimit(limit int) error {
 	}
 
 	if valData != nil {
-		k.Values = valData
+		k.Values = make(map[string]any, len(valData))
+		maps.Copy(k.Values, valData)
 	}
 
 	names, err := k.Handle.ReadSubKeyNames(-1)
