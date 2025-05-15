@@ -4,6 +4,7 @@ import "encoding/json"
 
 type keyJson struct {
 	Path    string                 `json:"path"`
+	Values  map[string]any         `json:"values,omitempty"`
 	Subkeys map[string]*subKeyJson `json:"subkeys,omitempty"`
 	Loaded  bool                   `json:"loaded"`
 }
@@ -22,6 +23,7 @@ func convertKey(k *Key) *keyJson {
 	export := &keyJson{
 		Path:   k.Path,
 		Loaded: k.Loaded,
+		Values: k.Values,
 	}
 
 	if k.Subkeys != nil && len(k.Subkeys) > 0 {
