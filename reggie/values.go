@@ -89,11 +89,12 @@ func (k *Key) DeleteValue(value string) error {
 	if err != nil {
 		return err
 	}
-	if v != nil {
-		err := k.Handle.DeleteValue(value)
-		if err != nil {
-			return err
-		}
+	if v == nil {
+		return fmt.Errorf("There is no value %s in %s", value, k.Path)
+	}
+	err = k.Handle.DeleteValue(value)
+	if err != nil {
+		return err
 	}
 	return nil
 }
