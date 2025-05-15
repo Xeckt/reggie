@@ -42,9 +42,10 @@ func (k *Key) CreateKey(path string, access uint32) (*Key, error) {
 	return &Key{handle, path, nil, false}, nil
 }
 
-// Load will get the current key you have opened and then enumerate through it,
-// Finding further subkeys and values.
-func (k *Key) Load(limit int) error {
+// LoadWithLimit will get the current key you have opened and then enumerate it
+// for futher subkeys and it's children.
+// `limit` is an integer to specify if you want to only load x amount of items.
+func (k *Key) LoadWithLimit(limit int) error {
 	if k.Loaded {
 		return fmt.Errorf("Cannot load data for %s: already loaded", k.Path)
 	}
@@ -94,6 +95,12 @@ func (k *Key) Load(limit int) error {
 
 	k.Loaded = true
 	return nil
+}
+
+// Load calls LoadWithLimit(0) for an explicit way to load keys
+// with no limit.
+func (k *Key) Load() error {
+	return k.LoadWithLimit(0)
 }
 
 // Walk will recursively traverse all keys and subkeys
