@@ -1,22 +1,25 @@
 # reggie
 <img src="./logo.png" width=250 height =250>
- 
-A clean, zero dependency wrapper around Go's `golang.org/x/sys/windows/registry` package.  
 
-The objective of reggie is to offer more utility, safer and improved control over the registry. 
+A clean, zero dependency wrapper around Go's `golang.org/x/sys/windows/registry` package.  
 
 ---
 
-## Features since v1.0.0
+## Features
 
-- Safe and concise control over keys
-- Object level JSON Exports
-- Tree traversal
-- Better value management
-    - Create values dynamically with the correct constraints
-    - Obtain all key=>values from a registry key
-    - Obtain values dynamically
-- Key cloning
+- [x] Effortlessly open, create, edit, or delete keys with guards in place
+
+- [x] JSON exports at the object level. Export any registry key object as structured, readable JSON — perfect for API's, dumping, etc.
+
+- [x] Seamlessly walk through registry hierarchies using a depth-first pattern.
+
+- [x] Dynamically create values with automatic type enforcement and correct constraints.
+
+- [x] Easily fetch all key-value pairs from any key in one call.
+
+- [x] Retrieve typed values easily without boilerplate.
+
+- [x] Clone a key object in memory, (including all values and subkeys) without affecting the original — useful for testing or state comparisons.
 
 ---
 
