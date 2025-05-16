@@ -3,26 +3,10 @@ package reggie
 import (
 	"fmt"
 	"maps"
+	"strings"
 
 	"golang.org/x/sys/windows/registry"
 )
-
-// Represents a registry key layout
-type Key struct {
-	Handle     registry.Key       // Parent registry key
-	Path       string             // Path of the parent registry key
-	Subkeys    map[string]*SubKey // Map of subkeys from the opened registry key
-	Values     map[string]any     // Values inside the parent registry key
-	Permission uint32             // Permission used for the key
-	Loaded     bool               // Represents if the key has had its values / subkeys loaded
-}
-
-// Represents a registry subkey layout
-type SubKey struct {
-	Name   string         // Name of the subkey
-	Values map[string]any // Values inside the subkey
-	Child  *Key           // Child keys inside the subkey
-}
 
 // Will get the current key you have opened and then enumerate it
 // for futher subkeys and it's children.
@@ -111,7 +95,7 @@ func (k *Key) Load() error {
 	return k.LoadWithLimit(0)
 }
 
-// Recursively traverses the key and all of its loaded subkeys,
+// Recursively traverses the key and all of its loaded subkeys from the top down,
 // applying the provided function `fn` to each *Key in depth-first order.
 //
 // If the key has not been loaded yet, Walk will call Load() automatically
@@ -139,4 +123,40 @@ func (k *Key) Walk(fn func(k *Key) error) error {
 	}
 
 	return nil
+}
+
+// Recursively traverses the key and all of its loaded subkeys in bottom up
+// post order. Uses the same logic as Walk()
+func (k *Key) WalkReverse(fn func(k *Key) error) error {
+	if !k.Loaded {
+		if err := k.Load(); err != nil {
+			return fmt.Errorf("walk failed to load subkeys: %w", err)
+		}
+	}
+
+	// Traverse subkeys first (post-order)
+	for _, sub := range k.Subkeys {
+		if sub.Child != nil {
+			if err := sub.Child.WalkReverse(fn); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Then apply the function to the current key
+	if err := fn(k); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Returns parent path and segment
+// e.g., Software\MyApp\Config -> (Software\MyApp, Config)
+func splitParent(path string) (string, string) {
+	idx := strings.LastIndex(path, `\`)
+	if idx == -1 {
+		return "", path // top-level under root
+	}
+	return path[:idx], path[idx+1:]
 }
