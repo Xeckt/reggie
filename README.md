@@ -27,7 +27,7 @@ A clean, zero dependency wrapper around Go's `golang.org/x/sys/windows/registry`
 
 See [examples folder](./reggie/examples/)
 
-Since v1.0.0 there is much more you can do with this wrapper. For example, if you want to expose information over an API to do with the registry, you can do that.
+Since `v1.0.0` there is much more you can do with this wrapper. For example, if you want to expose information over an API to do with the registry, you can do that.
 
 Here is a basic example of opening a key, loading its information into the object and then exporting to JSON:
 
