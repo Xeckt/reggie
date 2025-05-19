@@ -17,13 +17,21 @@ func containsZeroByte(s string) bool {
 // Obtains a value from the key `name`.
 // It will get any type from the registry without needing
 // to specify the specific registry.GetXValue(...) functions.
-func (k *Key) GetValue(name string, valType uint32) (any, error) {
-	switch valType {
+func (k *Key) GetValue(name string) (any, error) {
+
+	_, t, _ := k.Handle.GetValue(name, nil)
+
+	switch t {
 	case registry.NONE:
 		return nil, nil // Allow nil checks
 
-	case registry.SZ, registry.EXPAND_SZ:
+	case registry.SZ:
 		v, _, err := k.Handle.GetStringValue(name)
+		return v, err
+
+	case registry.EXPAND_SZ:
+		v, _, err := k.Handle.GetStringValue(name)
+		v, err = registry.ExpandString(v)
 		return v, err
 
 	case registry.DWORD, registry.QWORD:
@@ -37,9 +45,8 @@ func (k *Key) GetValue(name string, valType uint32) (any, error) {
 	case registry.MULTI_SZ:
 		v, _, err := k.Handle.GetStringsValue(name)
 		return v, err
-
 	default:
-		return nil, fmt.Errorf("Unable to get value %s from key: %s", name, k.Path)
+		return nil, fmt.Errorf("Unable to get value from key name %s on open key %s", name, k.Path)
 	}
 }
 
