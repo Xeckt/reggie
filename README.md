@@ -50,7 +50,7 @@ func main() {
 }
 ```
 
-Do you want to apply your own logic while walking through the registry? Maybe you want to write your own search function? 
+Maybe you want to apply your own logic while walking through the registry:
 
 ```go
 func main() {
@@ -77,6 +77,51 @@ func main() {
 	}
 }
 ```
+
+Reggie aims to be as close to the original usage as possible while expanding on it. Let's take the usual way of creating a value inside a key with the `registry` pkg:
+
+```go
+	key, err := registry.OpenKey(registry.CURRENT_USER, `Software`, registry.ALL_ACCESS)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = key.SetBinaryValue("name", []byte("value"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = key.SetQWordValue("name", 64)
+	if err != nil {
+		log.fatal(err)
+	}
+	... 
+```
+It can be cumbersome setting values like this. Instead, we have a helper function `CreateValue(...)`.
+The function will infer the underlying type and process it accordingly. As a result, types can be custom:
+
+```go
+type QWORD uint64
+
+func main() {
+	reggieDemo, err := reggie.OpenKey(registry.CURRENT_USER, `Software\ReggieDemo`, registry.ALL_ACCESS)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer reggieDemo.Close()
+
+	var val QWORD
+
+	val = 12345
+
+	err = reggieDemo.CreateValue("string key", val)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+See the [examples folder](reggie/examples/) for more
 
 ## Contributing & License
 
