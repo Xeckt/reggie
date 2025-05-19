@@ -7,7 +7,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func main() {
+func createValue() {
 	key, err := reggie.OpenKey(registry.CURRENT_USER, `Software\ReggieDemo`, registry.ALL_ACCESS)
 	if err != nil {
 		log.Fatal(err)
