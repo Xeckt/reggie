@@ -82,10 +82,6 @@ func (k *Key) CreateValue(key string, value any) error {
 	return nil
 }
 
-func (k *Key) CreateValues(values map[string]any) error {
-
-}
-
 // Safely checks if the value exists and deletes it.
 func (k *Key) DeleteValue(name string) error {
 	err := k.Handle.DeleteValue(name)
