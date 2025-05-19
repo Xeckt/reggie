@@ -17,39 +17,30 @@ func containsZeroByte(s string) bool {
 // Obtains a value from the key `name`.
 // It will get any type from the registry without needing
 // to specify the specific registry.GetXValue(...) functions.
-func (k *Key) GetValue(name string) (any, error) {
-	var err error
-
-	var v any
-
-	_, t, _ := k.Handle.GetValue(name, nil)
-
-	switch t {
+func (k *Key) GetValue(name string, valType uint32) (any, error) {
+	switch valType {
 	case registry.NONE:
 		return nil, nil // Allow nil checks
 
-	case registry.SZ:
-		v, _, err = k.Handle.GetStringValue(name)
-
-	case registry.EXPAND_SZ:
-		v, _, err = k.Handle.GetStringValue(name)
-		v, err = registry.ExpandString(v.(string))
+	case registry.SZ, registry.EXPAND_SZ:
+		v, _, err := k.Handle.GetStringValue(name)
+		return v, err
 
 	case registry.DWORD, registry.QWORD:
-		v, _, err = k.Handle.GetIntegerValue(name)
+		v, _, err := k.Handle.GetIntegerValue(name)
+		return v, err
 
 	case registry.BINARY:
-		v, _, err = k.Handle.GetBinaryValue(name)
+		v, _, err := k.Handle.GetBinaryValue(name)
+		return v, err
 
 	case registry.MULTI_SZ:
-		v, _, err = k.Handle.GetStringsValue(name)
-	}
+		v, _, err := k.Handle.GetStringsValue(name)
+		return v, err
 
-	if err != nil {
-		return nil, err
+	default:
+		return nil, fmt.Errorf("Unable to get value %s from key: %s", name, k.Path)
 	}
-
-	return v, nil
 }
 
 // Creates a value in accordance with the std registry package constraints.
