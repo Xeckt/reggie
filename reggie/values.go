@@ -46,6 +46,7 @@ func (k *Key) GetValue(name string) (any, error) {
 	case registry.MULTI_SZ:
 		v, _, err := k.Handle.GetStringsValue(name)
 		return v, err
+
 	default:
 		return nil, fmt.Errorf("Unable to get value from key name %s on open key %s", name, k.Path)
 	}
