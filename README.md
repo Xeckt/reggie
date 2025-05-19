@@ -1,7 +1,7 @@
 # reggie
 <img src="./logo.png" width=250 height =250>
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie@v1.0.0)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Xeckt/reggie.svg)](https://pkg.go.dev/github.com/Xeckt/reggie)
 
 A clean, zero dependency wrapper around Go's `golang.org/x/sys/windows/registry` package.  
 
