@@ -19,6 +19,7 @@ func containsZeroByte(s string) bool {
 // to specify the specific registry.GetXValue(...) functions.
 func (k *Key) GetValue(name string) (any, error) {
 
+	// Only need to obtain type here so do not provide a buffer
 	_, t, _ := k.Handle.GetValue(name, nil)
 
 	switch t {
