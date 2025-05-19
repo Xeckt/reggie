@@ -43,7 +43,7 @@ func TestSetAndGetValue(t *testing.T) {
 	key := setupTestKey(t)
 
 	// Set
-	err := key.CreateValue("TestString", "Hello World", registry.SZ)
+	err := key.CreateValue("TestString", "Hello World")
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestSetAndGetValue(t *testing.T) {
 func TestDeleteValue(t *testing.T) {
 	key := setupTestKey(t)
 
-	err := key.CreateValue("ToDelete", "DeleteMe", registry.SZ)
+	err := key.CreateValue("ToDelete", "DeleteMe")
 	if err != nil {
 		t.Fatalf("create failed: %v", err)
 	}
