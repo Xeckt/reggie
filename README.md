@@ -25,8 +25,6 @@ A clean, zero dependency wrapper around Go's `golang.org/x/sys/windows/registry`
 
 ## Examples
 
-See [examples folder](./reggie/examples/)
-
 Since `v1.0.0` there are more features you can utilise. 
 
 For example, if you want to expose registry information over an API, you can export the data sets to JSON:
@@ -123,7 +121,7 @@ func main() {
 }
 ```
 
-See the [examples folder](reggie/examples/) for more
+See the [examples folder](./reggie/examples/) for more.
 
 ## Contributing & License
 
