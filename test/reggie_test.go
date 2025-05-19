@@ -1,7 +1,6 @@
 package reggie_test
 
 import (
-	"fmt"
 	"log"
 	"testing"
 
@@ -18,7 +17,6 @@ func setupTestKey(t *testing.T) *reggie.Key {
 	}
 
 	if reggie.KeyExists(key.Handle, testPath) {
-		fmt.Println("should?")
 		key.DeleteKey(testPath)
 	}
 
@@ -42,13 +40,11 @@ func setupTestKey(t *testing.T) *reggie.Key {
 func TestSetAndGetValue(t *testing.T) {
 	key := setupTestKey(t)
 
-	// Set
 	err := key.CreateValue("TestString", "Hello World")
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
 
-	// Get
 	val, err := key.GetValue("TestString")
 	if err != nil {
 		t.Fatalf("Get failed: %v", err)

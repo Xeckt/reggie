@@ -3,7 +3,6 @@ package reggie
 import (
 	"fmt"
 	"maps"
-	"strings"
 
 	"golang.org/x/sys/windows/registry"
 )
@@ -149,14 +148,4 @@ func (k *Key) WalkReverse(fn func(k *Key) error) error {
 	}
 
 	return nil
-}
-
-// Returns parent path and segment
-// e.g., Software\MyApp\Config -> (Software\MyApp, Config)
-func splitParent(path string) (string, string) {
-	idx := strings.LastIndex(path, `\`)
-	if idx == -1 {
-		return "", path
-	}
-	return path[:idx], path[idx+1:]
 }

@@ -123,7 +123,7 @@ func main() {
 }
 ```
 
-See the [examples folder](./reggie/examples/) for more.
+See the [examples folder](./examples/) for more.
 
 ## Contributing & License
 

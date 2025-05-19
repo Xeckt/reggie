@@ -36,3 +36,11 @@ func toBaseType(value any) (any, error) {
 func containsZeroByte(s string) bool {
 	return strings.IndexByte(s, 0) != -1
 }
+
+func splitParent(path string) (string, string) {
+	idx := strings.LastIndex(path, `\`)
+	if idx == -1 {
+		return "", path
+	}
+	return path[:idx], path[idx+1:]
+}
