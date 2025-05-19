@@ -31,8 +31,6 @@ Since `v1.0.0` there are more features you can utilise.
 
 For example, if you want to expose registry information over an API, you can export the data sets to JSON:
 
-Here is a basic example of that:
-
 ```go
 func main() {
 	key, err := reggie.OpenKey(registry.CURRENT_USER, `Control Panel\Accessibility`, registry.ALL_ACCESS)
