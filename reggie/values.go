@@ -82,6 +82,17 @@ func (k *Key) CreateValue(key string, value any) error {
 	return nil
 }
 
+// Loops through the provided map and calls CreateValue(...) to create all key=>values
+// in the current key object.
+func (k *Key) CreateValueMany(data map[string]any) error {
+	for key, value := range data {
+		err := k.CreateValue(key, value)
+		if err != nil {
+			return fmt.Errorf("Error creating key: %s with value %v", key, value)
+		}
+	}
+}
+
 // Safely checks if the value exists and deletes it.
 func (k *Key) DeleteValue(name string) error {
 	err := k.Handle.DeleteValue(name)
