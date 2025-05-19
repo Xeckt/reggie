@@ -156,7 +156,7 @@ func (k *Key) WalkReverse(fn func(k *Key) error) error {
 func splitParent(path string) (string, string) {
 	idx := strings.LastIndex(path, `\`)
 	if idx == -1 {
-		return "", path // top-level under root
+		return "", path
 	}
 	return path[:idx], path[idx+1:]
 }
