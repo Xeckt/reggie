@@ -100,7 +100,7 @@ func main() {
 }
 ```
 It can be cumbersome setting values like this. Instead, we have a helper function `CreateValue(...)`.
-The function will infer the underlying type and process it accordingly. As a result, types can be custom:
+The function will obtain the underlying type and process it accordingly. As a result, types can be custom:
 
 ```go
 type QWORD uint64

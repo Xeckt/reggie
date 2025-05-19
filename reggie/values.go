@@ -53,7 +53,7 @@ func (k *Key) GetValue(name string) (any, error) {
 }
 
 // Creates a value in accordance with the std registry package constraints.
-// Value type is inferred. Supports all known types of values.
+// Underlying value type is reflected. Supports all known types of values.
 func (k *Key) CreateValue(key string, value any) error {
 	switch reflect.TypeOf(value).Kind() {
 	case reflect.String:
