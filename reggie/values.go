@@ -19,6 +19,7 @@ func containsZeroByte(s string) bool {
 func (k *Key) GetValue(name string) (any, error) {
 	var err error
 	var v any
+
 	_, t, _ := k.Handle.GetValue(name, nil)
 
 	switch t {
