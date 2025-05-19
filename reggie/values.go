@@ -3,6 +3,7 @@ package reggie
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"syscall"
 
@@ -18,6 +19,7 @@ func containsZeroByte(s string) bool {
 // to specify the specific registry.GetXValue(...) functions.
 func (k *Key) GetValue(name string) (any, error) {
 	var err error
+
 	var v any
 
 	_, t, _ := k.Handle.GetValue(name, nil)
@@ -51,70 +53,37 @@ func (k *Key) GetValue(name string) (any, error) {
 }
 
 // Creates a value in accordance with the std registry package constraints.
-// Supports all known types of values.
-func (k *Key) CreateValue(key string, value any, valueType uint32) error {
-	var err error
-
-	switch valueType {
-	case registry.SZ:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("value is not of type string but of type: %T", value)
-		}
-
-		if containsZeroByte(v) {
+// Value type is inferred. Supports all known types of values.
+func (k *Key) CreateValue(key string, value any) error {
+	switch reflect.TypeOf(value).Kind() {
+	case reflect.String:
+		if containsZeroByte(value.(string)) {
 			return fmt.Errorf("value for %q contains a zero byte, which is not allowed", key)
 		}
+		return k.Handle.SetStringValue(key, value.(string))
 
-		err = k.Handle.SetStringValue(key, v)
-	case registry.EXPAND_SZ:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("value is not of type string but of type: %T", value)
+	case reflect.Slice:
+		if reflect.TypeOf(value).Elem().Kind() == reflect.String {
+			return k.Handle.SetStringsValue(key, value.([]string))
+		} else if reflect.TypeOf(value).Elem().Kind() == reflect.Uint8 {
+			return k.Handle.SetBinaryValue(key, value.([]byte))
 		}
 
-		if containsZeroByte(v) {
-			return fmt.Errorf("value for %q contains a zero byte, which is not allowed", key)
-		}
+	case reflect.Uint64:
+		return k.Handle.SetQWordValue(key, value.(uint64))
 
-		err = k.Handle.SetExpandStringValue(key, v)
-	case registry.MULTI_SZ:
-		v, ok := value.([]string)
-		if !ok {
-			return fmt.Errorf("value is not of type string but of type: %T", value)
-		}
+	case reflect.Uint32:
+		return k.Handle.SetDWordValue(key, value.(uint32))
 
-		err = k.Handle.SetStringsValue(key, v)
-	case registry.BINARY:
-		v, ok := value.([]byte)
-		if !ok {
-			return fmt.Errorf("value is not of type []byte but of type: %T", value)
-		}
-
-		err = k.Handle.SetBinaryValue(key, v)
-	case registry.QWORD:
-		v, ok := value.(uint64)
-		if !ok {
-			return fmt.Errorf("value is not of type uint64 but of type: %T", value)
-		}
-
-		err = k.Handle.SetQWordValue(key, v)
-	case registry.DWORD:
-		v, ok := value.(uint32)
-		if !ok {
-			return fmt.Errorf("value is not of type uint32 but of type: %T", value)
-		}
-
-		err = k.Handle.SetDWordValue(key, v)
 	default:
-		return fmt.Errorf("Unable to match case for CreateValue value %v", value)
-	}
-
-	if err != nil {
-		return err
+		return fmt.Errorf("Unsupported type %T", value)
 	}
 
 	return nil
+}
+
+func (k *Key) CreateValues(values map[string]any) error {
+
 }
 
 // Safely checks if the value exists and deletes it.
