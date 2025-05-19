@@ -3,16 +3,11 @@ package reggie
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"syscall"
 
 	"golang.org/x/sys/windows/registry"
 )
-
-func containsZeroByte(s string) bool {
-	return strings.IndexByte(s, 0) != -1
-}
 
 // Obtains a value from the key `name`.
 // It will get any type from the registry without needing
@@ -55,31 +50,34 @@ func (k *Key) GetValue(name string) (any, error) {
 // Creates a value in accordance with the std registry package constraints.
 // Underlying value type is reflected. Supports all known types of values.
 func (k *Key) CreateValue(key string, value any) error {
-	switch reflect.TypeOf(value).Kind() {
-	case reflect.String:
-		if containsZeroByte(value.(string)) {
-			return fmt.Errorf("value for %q contains a zero byte, which is not allowed", key)
-		}
-		return k.Handle.SetStringValue(key, value.(string))
 
-	case reflect.Slice:
-		if reflect.TypeOf(value).Elem().Kind() == reflect.String {
-			return k.Handle.SetStringsValue(key, value.([]string))
-		} else if reflect.TypeOf(value).Elem().Kind() == reflect.Uint8 {
-			return k.Handle.SetBinaryValue(key, value.([]byte))
-		}
-
-	case reflect.Uint64:
-		return k.Handle.SetQWordValue(key, value.(uint64))
-
-	case reflect.Uint32:
-		return k.Handle.SetDWordValue(key, value.(uint32))
-
-	default:
-		return fmt.Errorf("Unsupported type %T", value)
+	t, err := toBaseType(value)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	switch t.(type) {
+	case string:
+		if containsZeroByte(t.(string)) {
+			return fmt.Errorf("value for %q contains a zero byte, which is not allowed", key)
+		}
+		return k.Handle.SetStringValue(key, t.(string))
+
+	case []string:
+		return k.Handle.SetStringsValue(key, t.([]string))
+
+	case []byte:
+		return k.Handle.SetBinaryValue(key, t.([]byte))
+
+	case uint64:
+		return k.Handle.SetQWordValue(key, t.(uint64))
+
+	case uint32:
+		return k.Handle.SetDWordValue(key, t.(uint32))
+
+	default:
+		return fmt.Errorf("Unsupported type %T", t)
+	}
 }
 
 // Loops through the provided map and calls CreateValue(...) to create all key=>values
@@ -88,9 +86,10 @@ func (k *Key) CreateValueMany(data map[string]any) error {
 	for key, value := range data {
 		err := k.CreateValue(key, value)
 		if err != nil {
-			return fmt.Errorf("Error creating key: %s with value %v", key, value)
+			return fmt.Errorf("Error creating key: %s with value %v: %w", key, value, err)
 		}
 	}
+	return nil
 }
 
 // Safely checks if the value exists and deletes it.
