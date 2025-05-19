@@ -81,6 +81,7 @@ func main() {
 Reggie aims to be as close to the original usage as possible while expanding on it. Let's take the usual way of creating a value inside a key with the `registry` pkg:
 
 ```go
+func main() {
 	key, err := registry.OpenKey(registry.CURRENT_USER, `Software`, registry.ALL_ACCESS)
 	if err != nil {
 		log.Fatal(err)
@@ -96,6 +97,7 @@ Reggie aims to be as close to the original usage as possible while expanding on 
 		log.fatal(err)
 	}
 	... 
+}
 ```
 It can be cumbersome setting values like this. Instead, we have a helper function `CreateValue(...)`.
 The function will infer the underlying type and process it accordingly. As a result, types can be custom:
