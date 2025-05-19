@@ -10,11 +10,11 @@ import (
 type QWORD uint64
 
 func createValueMany() {
-	reggieDemo, err := reggie.OpenKey(registry.CURRENT_USER, `Software\ReggieDemo`, registry.ALL_ACCESS)
+	key, err := reggie.OpenKey(registry.CURRENT_USER, `Software\ReggieDemo`, registry.ALL_ACCESS)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer reggieDemo.Close()
+	defer key.Close()
 
 	many := make(map[string]any)
 
@@ -27,7 +27,7 @@ func createValueMany() {
 	many["numberfour"] = []byte("bigman")
 	many["numberfive"] = v
 
-	err = reggieDemo.CreateValueMany(many)
+	err = key.CreateValueMany(many)
 	if err != nil {
 		log.Fatal(err)
 	}
