@@ -1,4 +1,4 @@
-module github.com/Xeckt/reggie
+module github.com/alchemicalkube/reggie
 
 go 1.24
 
